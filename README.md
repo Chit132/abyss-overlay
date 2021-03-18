@@ -17,7 +17,7 @@ Open the overlay and put it on either the top left or top right of your screen. 
 - Color-coded stats in terms of skill level
 - Shows player skins next to their names
 - Tells you when you need to run command `/who`
-- Supports Windows and macOS
+- Supports Windows (macOS coming soon)
 - Completely FREE!
 
 The Abyss Overlay is made by Chit (OhChit). Join the [Discord](https://discord.gg/Wq4HPU4qCK) and look in the overlay category to receive overlay updates, announcements, report bugs, and make suggestions. Any help is appreciated :D
