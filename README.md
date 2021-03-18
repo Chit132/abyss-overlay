@@ -13,7 +13,7 @@ Open the overlay and put it on either the top left or top right of your screen. 
 - Privacy: All information is stored on your computer; no one else has access to your API key
 - Shows nicked players
 - Uses stats to anticipate potential snipers and alts
-- If you are nicked as an MVP++, it can show your actual stats instead of showing your nick. Only you can see yourself unnicked so your nick is not exposed to others
+- If you have MVP++ and are nicked, it can show your actual stats instead of showing your nick. Only you can see yourself unnicked so your nick is not exposed to others
 - Color-coded stats in terms of skill level
 - Shows player skins next to their names
 - Tells you when you need to run command `/who`
