@@ -22,7 +22,7 @@ Open the overlay and put it on either the top left or top right of your screen. 
 - Completely FREE!
 
 The Abyss Overlay is made by Chit (OhChit). Join the [Discord](https://discord.gg/Wq4HPU4qCK) and look in the overlay category to receive overlay updates, announcements, report bugs, and make suggestions. Any help is appreciated :D
-## [DOWNLOAD HERE](https://github.com/Chit132/abyss-overlay/releases)
+## [DOWNLOAD HERE](https://github.com/Chit132/abyss-overlay/releases/latest)
 ## Contact me on Discord by joining the server and messaging or @ing me **Chit#8987**
 
 ![logo](https://user-images.githubusercontent.com/61895718/111565782-5ced2900-8772-11eb-9c43-c8801fc2a1a8.png)
