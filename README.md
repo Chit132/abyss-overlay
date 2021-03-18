@@ -1,4 +1,4 @@
-# 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟬.𝟬
+# 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟬.𝟬 ✧
 
 ## Recommended Usage
 Open the overlay and put it on either the top left or top right of your screen. Select your client. Adjust any settings you want. Make sure to run `/who` in lobby when not all players in the lobby are registered in the overlay. Leave the rest up to the overlay :)
