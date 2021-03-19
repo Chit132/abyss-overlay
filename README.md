@@ -18,7 +18,7 @@ Open the overlay and put it on either the top left or top right of your screen. 
 - Shows player skins next to their names
 - Tells you when you need to run command `/who`
 - Settings are saved even when you install a new update
-- Supports Windows (macOS coming soon)
+- Supports Windows and macOS (macOS bit buggy)
 - Completely FREE!
 
 The Abyss Overlay is made by Chit (OhChit). Join the [Discord](https://discord.gg/Wq4HPU4qCK) and look in the overlay category to receive overlay updates, announcements, report bugs, and make suggestions. Any help is appreciated :D
