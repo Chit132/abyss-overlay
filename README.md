@@ -7,17 +7,17 @@ Open the overlay and put it on either the top left or top right of your screen. 
 - Shows stats of players in your lobby in seconds
 - Resizable, movable, and minimizable
 - Works with most clients: Badlion, Lunar, PvPLounge, Labymod, Vanilla, Forge
-- Changable color and opacity
-- Automatically switches between size modes when game starts or someone joins. You can also manually do this
 - Sends you a notification when game starts so you do not miss out if you are tabbed out
 - Privacy: All information is stored only on your computer; no one else has access to your API key, stats, or queuing patterns
 - Shows nicked players
 - Uses stats to anticipate potential snipers and alts
-- If you have MVP++ and are nicked, it can show your actual stats instead of showing your nick. Only you can see yourself unnicked so your nick is not exposed to others
 - Color-coded stats in terms of skill level
 - Shows player skins next to their names
 - Tells you when you need to run command `/who`
 - Settings are saved even when you install a new update
+- Settings: If you have MVP++ and are nicked, it can show your actual stats instead of showing your nick. Only you can see yourself unnicked so your nick is not exposed to others
+- Settings: Changable color and opacity
+- Settings: Automatically switches between size modes when game starts or someone joins. You can also manually do this
 - Supports Windows and macOS (macOS has few visual bugs)
 - Completely FREE!
 
