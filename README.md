@@ -21,7 +21,7 @@ Open the overlay and put it on either the top left or top right of your screen. 
 - Supports Windows and macOS (macOS has few visual bugs)
 - Completely FREE!
 
-The Abyss Overlay is made by Chit (OhChit). Join the [Discord](https://discord.gg/Wq4HPU4qCK) and look in the overlay category to receive overlay updates, announcements, report bugs, and make suggestions. Any help is appreciated :D
+The Abyss Overlay is made by Chit (OhChit). Join the [Discord](https://discord.gg/eDnHTT3aBS) and look in the overlay category to receive overlay updates, announcements, report bugs, and make suggestions. Any help is appreciated :D
 ## [DOWNLOAD HERE](https://github.com/Chit132/abyss-overlay/releases/latest)
 ## Contact me on Discord by joining the server and messaging or @ing me **Chit#8987**
 
