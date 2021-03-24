@@ -1,10 +1,12 @@
-# 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟬.𝟬 ✧
+# 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟬.𝟭 ✧
 
 ## Recommended Usage
-Open the overlay and put it on either the top left or top right of your screen. Select your client. Adjust any settings you want. Make sure to run `/who` in lobby when not all players in the lobby are registered in the overlay. Leave the rest up to the overlay :)
+Open the overlay and put it on either the top left or top right of your screen. Select your client. Adjust any settings you want. Make sure to run `/who` in lobby when not all players in the lobby are registered in the overlay. Leave the rest up to the overlay :) (Minecraft has to be in windowed as full screen is not supported yet)
 
 ## Features
 - Shows stats of players in your lobby in seconds
+- Shows party stats
+- Shows stats of anyone that calls your name in lobby with an option to turn it on or off
 - Resizable, movable, and minimizable
 - Works with most clients: Badlion, Lunar, PvPLounge, Labymod, Vanilla, Forge
 - Sends you a notification when game starts so you do not miss out if you are tabbed out
@@ -20,6 +22,25 @@ Open the overlay and put it on either the top left or top right of your screen. 
 - Settings: Automatically switches between size modes when game starts or someone joins. You can also manually do this
 - Supports Windows and macOS (macOS has few visual bugs)
 - Completely FREE!
+
+## Upcoming features
+- [ ] Linux support
+- [ ] Fullscreen (Will take awhile)
+- [ ] Manually add api key
+- [ ] Search for player stats
+- [ ] Improve sniper detection using login dates and other stats
+- [ ] Show guilds
+- [ ] Remember overlay position and size
+- [ ] Custom file path
+- [ ] Hover over names to see all stats
+- [ ] Game start timer
+
+## Known bugs + status
+
+- [ ] Scroll fix
+- [ ] Players showing as nicked when unable to contact api
+
+## Discord
 
 The Abyss Overlay is made by Chit (OhChit). Join the [Discord](https://discord.gg/eDnHTT3aBS) and look in the overlay category to receive overlay updates, announcements, report bugs, and make suggestions. Any help is appreciated :D
 ## [DOWNLOAD HERE](https://github.com/Chit132/abyss-overlay/releases/latest)
