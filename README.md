@@ -1,5 +1,7 @@
 # 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟭.𝟬 ✧
 
+[![GitHub issues](https://img.shields.io/github/issues/Chit132/abyss-overlay)](https://github.com/Chit132/abyss-overlay/issues) ![GitHub package.json version](https://img.shields.io/github/package-json/v/Chit132/abyss-overlay) ![GitHub all releases](https://img.shields.io/github/downloads/Chit132/abyss-overlay/total) ![Discord](https://img.shields.io/discord/822639649247592528?color=7289DA&label=Discord)
+
 ## Recommended Usage
 Open the overlay and put it on either the top left or top right of your screen. Select your client. Adjust any settings you want. Make sure to run `/who` in lobby when not all players in the lobby are registered in the overlay. Leave the rest up to the overlay :) (Minecraft has to be in windowed as full screen is not supported yet)
 
