@@ -1,44 +1,40 @@
-# 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟬.𝟭 ✧
+# 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟭.𝟬 ✧
 
 ## Recommended Usage
 Open the overlay and put it on either the top left or top right of your screen. Select your client. Adjust any settings you want. Make sure to run `/who` in lobby when not all players in the lobby are registered in the overlay. Leave the rest up to the overlay :) (Minecraft has to be in windowed as full screen is not supported yet)
 
 ## Features
+- Players that are possibly in a party are given the PRTY tag
 - Shows stats of players in your lobby in seconds
 - Shows party stats
-- Shows stats of anyone that calls your name in lobby with an option to turn it on or off
+- Shows stats of anyone that calls your name in lobby with an option to turn it on or off, gives them CALL tag
 - Resizable, movable, and minimizable
 - Works with most clients: Badlion, Lunar, PvPLounge, Labymod, Vanilla, Forge
 - Sends you a notification when game starts so you do not miss out if you are tabbed out
 - Privacy: All information is stored only on your computer; no one else has access to your API key, stats, or queuing patterns
 - Shows nicked players
+- Has an info tab in the overlay
 - Uses stats to anticipate potential snipers and alts
 - Color-coded stats in terms of skill level
 - Shows player skins next to their names
 - Tells you when you need to run command `/who`
+- Shows people in your party with the P tag
+- You can use the command /w ![username] in game to check a person's stats.
+- Settings: Add stats of anyone that calls your name in lobby with an option to turn it on or off
 - Settings are saved even when you install a new update
 - Settings: If you have MVP++ and are nicked, it can show your actual stats instead of showing your nick. Only you can see yourself unnicked so your nick is not exposed to others
 - Settings: Changable color and opacity
+- Settings: Auto shrink/unshrink
+- Settings: Unnick yourself
+- Settings: Game start Notifications
 - Settings: Automatically switches between size modes when game starts or someone joins. You can also manually do this
+- Settings: Bedwars gamemodes selection
 - Supports Windows and macOS (macOS has few visual bugs)
 - Completely FREE!
 
-## Upcoming features
-- [ ] Linux support
-- [ ] Fullscreen (Will take awhile)
-- [ ] Manually add api key
-- [ ] Search for player stats
-- [ ] Improve sniper detection using login dates and other stats
-- [ ] Show guilds
-- [ ] Remember overlay position and size
-- [ ] Custom file path
-- [ ] Hover over names to see all stats
-- [ ] Game start timer
+## Preview
 
-## Known bugs + status
-
-- [ ] Scroll fix
-- [ ] Players showing as nicked when unable to contact api
+![Preview](https://media.discordapp.net/attachments/560472364660555778/822996049743446026/unknown.png)
 
 ## Discord
 
