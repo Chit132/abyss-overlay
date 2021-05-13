@@ -1,4 +1,4 @@
-# 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.2.𝟬 ✧
+# 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟮.𝟮 ✧
 
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/Chit132/abyss-overlay) ![GitHub all releases](https://img.shields.io/github/downloads/Chit132/abyss-overlay/total) ![Discord](https://img.shields.io/discord/822639649247592528?color=7289DA&label=Discord)
 
