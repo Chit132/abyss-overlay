@@ -35,7 +35,7 @@ Open the overlay and put it on either the top left or top right of your screen. 
 - Completely FREE!
 
 ## Preview
-![Preview](https://media.discordapp.net/attachments/560472364660555778/822996049743446026/unknown.png)
+![Preview](https://cdn.discordapp.com/attachments/822847106377056287/843191678991204362/unknown.png)
 
 ## Upcoming features
 - [ ] Linux support
