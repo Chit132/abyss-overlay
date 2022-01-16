@@ -1,63 +1,84 @@
-# 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟮.𝟮 ✧
+# <img src="https://user-images.githubusercontent.com/61895718/111565782-5ced2900-8772-11eb-9c43-c8801fc2a1a8.png" width="32px;"> 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟰.𝟬
 
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/Chit132/abyss-overlay) ![GitHub all releases](https://img.shields.io/github/downloads/Chit132/abyss-overlay/total) ![Discord](https://img.shields.io/discord/822639649247592528?color=7289DA&label=Discord)
 
-## Recommended Usage
-Open the overlay and put it on either the top left or top right of your screen. Select your client. Adjust any settings you want. Make sure to run `/who` in lobby when not all players in the lobby are registered in the overlay. Leave the rest up to the overlay :) (Minecraft has to be in windowed as full screen is not supported yet)
+## Sections
+- [First Usage](#first-usage)
+- [Features](#features)
+- [Previews](#preview)
+- [Known Bugs](#known-bugs)
+- [Discord/Support](#discord)
+- [Download](/releases/latest)
+
+## First usage
+1. Open the Overlay and select your corrosponding client <br> *(If you don't have any of the corrospending clients; select vanilla and go to the settings and click on `Select log file`, locate your log file and select it)*
+2. Go onto `hypixel.net` and do `/api new` in game chat
+3. The error on the api will go away in accordance to the api, now go into a game and do `/who` in game chat
 
 ## Features
+### General features
 - Shows stats of players in your lobby in seconds
-- Shows party stats
-- Shows stats of anyone that calls your name in lobby with an option to turn it on or off, gives them CALL tag
+- Works with most clients: Badlion, Lunar, PvPLounge, Labymod, Vanilla, Forge and can have any custom latest.log
 - Resizable, movable, and minimizable
-- Works with most clients: Badlion, Lunar, PvPLounge, Labymod, Vanilla, Forge
+- Simple, sleak, clean and effortless to use
+- Shows stats of anyone that calls your name in lobby with an option to turn it on or off, gives them `CALL` tag
+- Players that are possibly in a party are given the `PRTY` tag
+- Shows people in your party with the `P` tag
 - Sends you a notification when game starts so you do not miss out if you are tabbed out
-- Privacy: All information is stored only on your computer; no one else has access to your API key, stats, or queuing patterns
 - Shows nicked players
-- Players that are possibly in a party are given the PRTY tag
-- Has an info tab in the overlay
+- Has an easy accessed info tab in the overlay
 - Uses stats to anticipate potential snipers and alts
 - Color-coded stats in terms of skill level
 - Shows player skins next to their names
+### Commands
 - Tells you when you need to run command `/who`
-- Shows people in your party with the P tag
-- You can use the command /w ![username] in game to check a person's stats.
-- Settings: Add stats of anyone that calls your name in lobby with an option to turn it on or off
+- You can use the command `/w ![username]` in game to check a person's stats.
+- You can clear ur list with `/w c` or `/w cl`
+- You can get your party stats with `/pl` or `/p list`
+- You can get your guild stats with `/gl` or `/gl list`
+### Music
+- You can make a private VC in the Abyss Overlay from within game
+- You and your friends can use the music bot commands in game
+- You have an interface to interact with the bot in your overlay
+- You can: skip, repeat, add, remove and clear the whole list from within game!
+### Session stats
+- You can track your session stats within the overlay
+- Gives exact non-rounded statictics
+- Gives differences in stats
+- Gives clear and simple digestible stats
+- Works for: Bedwars, Skywars and Duels
+- You can change the Bedwars gamemode
+### Settings
+- Add stats of anyone that calls your name in lobby with an option to turn it on or off
 - Settings are saved even when you install a new update
-- Settings: If you have MVP++ and are nicked, it can show your actual stats instead of showing your nick. Only you can see yourself unnicked so your nick is not exposed to others
-- Settings: Changable color and opacity
-- Settings: Auto shrink/unshrink
-- Settings: Unnick yourself
-- Settings: Game start Notifications
-- Settings: Automatically switches between size modes when game starts or someone joins. You can also manually do this
-- Settings: Bedwars gamemodes selection
-- Supports Windows and macOS (macOS has few visual bugs)
+- If you have MVP++ and are nicked, it can show your actual stats instead of showing your nick. Only you can see yourself unnicked so your nick is not exposed to others
+- Changable color and opacity
+- Auto shrink/unshrink
+- Unnick yourself
+- Game start Notifications
+- Automatically switches between size modes when game starts or someone joins. You can also manually do this
+- Bedwars gamemodes selection
+- Multiple gamemode stats
+## Additional Features
+- All information is stored only on your computer; no one else has access to your API key, stats, or queuing patterns
+- Supports Windows and macOS
 - Completely FREE!
 
 ## Preview
 ![Preview](https://cdn.discordapp.com/attachments/822847106377056287/843191678991204362/unknown.png)
+![Settings](https://user-images.githubusercontent.com/60571306/149643341-81d8efad-b782-48ba-a600-82b2346ba669.png)
+![Info](https://user-images.githubusercontent.com/60571306/149643395-1f8a30f1-694a-45a5-b585-b4e0cf3d208b.png)
+![Music](https://user-images.githubusercontent.com/60571306/149643502-143411e7-dcbf-4709-9571-7ff741cc058e.png)
 
-## Upcoming features
-- [ ] Linux support
-- [ ] Fullscreen (Will take awhile)
-- [ ] Manually add api key
-- [ ] Search for player stats
-- [ ] Improve sniper detection using login dates and other stats
-- [ ] Show guilds
-- [ ] Remember overlay position and size
-- [ ] Custom file path
-- [ ] Hover over names to see all stats
-- [ ] Game start timer
+## Known bugs
 
-## Known bugs + status
-
-- [ ] Scroll fix
-- [ ] Players showing as nicked when unable to contact api
+- [ ] Does not work in fullscreen
+- [ ] Buttons don't work on occasion
+- [ ] Variability with the compatibility with Lunar
 
 ## Discord
 
-The Abyss Overlay is made by Chit (OhChit). Join the [Discord](https://discord.gg/eDnHTT3aBS) and look in the overlay category to receive overlay updates, announcements, report bugs, and make suggestions. Any help is appreciated :D
-## [DOWNLOAD HERE](https://github.com/Chit132/abyss-overlay/releases/latest)
-## Contact me on Discord by joining the server and messaging or @ing me **Chit#8987**
-
-![logo](https://user-images.githubusercontent.com/61895718/111565782-5ced2900-8772-11eb-9c43-c8801fc2a1a8.png)
+The Abyss Overlay is made by Chit (OhChit). <br>
+Join the [Discord](https://discord.gg/eDnHTT3aBS) and look in the overlay category to receive overlay updates, announcements, report bugs, and make suggestions. <br>
+*Any help is appreciated :D* <br>
+**Contact me on Discord by joining the server and [messaging](https://discord.com/users/338395595599249409) or @ing me**
