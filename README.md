@@ -59,16 +59,14 @@
 - Automatically switches between size modes when game starts or someone joins. You can also manually do this
 - Bedwars gamemodes selection
 - Multiple gamemode stats
-## Additional Features
+### Additional Features
 - All information is stored only on your computer; no one else has access to your API key, stats, or queuing patterns
 - Supports Windows and macOS
 - Completely FREE!
 
 ## Preview
 ![Preview](https://cdn.discordapp.com/attachments/822847106377056287/843191678991204362/unknown.png)
-![Settings](https://user-images.githubusercontent.com/60571306/149643341-81d8efad-b782-48ba-a600-82b2346ba669.png)
-![Info](https://user-images.githubusercontent.com/60571306/149643395-1f8a30f1-694a-45a5-b585-b4e0cf3d208b.png)
-![Music](https://user-images.githubusercontent.com/60571306/149643502-143411e7-dcbf-4709-9571-7ff741cc058e.png)
+![Music](https://camo.githubusercontent.com/fdcd192cc5afcbe84fa8d7875c56b79c6d684c72a7a97632d03e637ea3fabe2e/68747470733a2f2f63646e2e646973636f72646170702e636f6d2f6174746163686d656e74732f3832343035303636343931323731353831362f3931333230303434383439343737323235342f756e6b6e6f776e2e706e67))
 
 ## Known bugs
 
