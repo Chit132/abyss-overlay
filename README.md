@@ -8,7 +8,7 @@
 - [Previews](#preview)
 - [Known Bugs](#known-bugs)
 - [Discord/Support](#discord)
-- [Download](/releases/latest)
+- [Download](https://github.com/Chit132/abyss-overlay/releases/latest)
 
 ## First usage
 1. Open the Overlay and select your corrosponding client <br> *(If you don't have any of the corrospending clients; select vanilla and go to the settings and click on `Select log file`, locate your log file and select it)*
