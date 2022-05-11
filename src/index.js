@@ -29,7 +29,7 @@ const config = require('electron-json-config');
 
 config.delete('players');
 const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP;
-var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, playerdb = 'https://playerdb.co/api/player/minecraft/', goodkey = true, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, mojang = 'https://api.mojang.com/users/profiles/minecraft/', goodkey = true, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
 
@@ -180,7 +180,6 @@ function starColor(stars){
 }
 function nameColor(api){
     let rank = api.newPackageRank;
-    //add rankcolor for yts and staff
     let plus = api.rankPlusColor;
     if (plus !== undefined){
         if (plus === 'RED') plus = '#FF5555';
@@ -204,6 +203,7 @@ function nameColor(api){
         else if (api.rank === 'ADMIN') return `<span style="color: #AA0000">[ADMIN] ${api.displayname}</span>`;
         else if (api.rank === 'MODERATOR') return `<span style="color: #00AA00">[MOD] ${api.displayname}</span>`;
         else if (api.rank === 'HELPER') return `<span style="color: #5555FF">[HELP] ${api.displayname}</span>`;
+        else return api.displayname;
     }
     else if (rank === 'MVP_PLUS'){
         if (api.monthlyPackageRank === 'NONE' || !api.hasOwnProperty('monthlyPackageRank')) return `<span style="color: #55FFFF;">[MVP</span><span style="color: ${plus}">+</span><span style="color: #55FFFF;">] ${api.displayname}</span>`;
@@ -650,12 +650,12 @@ function playerAJAX(uuid, ign, e, guild = ''){
 }
 
 function addPlayer(ign, e = 0){
-    let got = false, uuid = '';
+    let uuid = '';
     ign = ign.replace(/§([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
     console.log(`Adding player: ${ign}`);
-    $.ajax({type: 'GET', async: true, url: playerdb+ign, success: (data) => {
-        uuid = data.data.player.raw_id; got = true; ign = data.data.player.username;
-        if (got){
+    $.ajax({type: 'GET', async: true, url: mojang+ign, success: (data, status) => {
+        if (status === 'success'){
+            uuid = data.id; ign = data.name;
             if (guildtag){
                 let guild = '';
                 $.ajax({type: 'GET', async: true, url: `https://api.hypixel.net/findGuild?key=${key}&byUuid=${uuid}`, success: (data) => {
@@ -677,10 +677,14 @@ function addPlayer(ign, e = 0){
             else{
                 playerAJAX(uuid, ign, e);
             }
+        } else {
+            players.push({name: ign, namehtml: ign, api: null});
+            updateArray();
         }
     }, error: () => {
         players.push({name: ign, namehtml: ign, api: null});
         updateArray();
+        console.error('error with mojang api GET uuid');
     }});
 }
 
@@ -1233,11 +1237,11 @@ $(() => {
     //     addPlayer('OhChit');
     // });
 
-    // $('#pp').on('click', () => {
-    //     let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
-    //     //let igns = ['Manhal_IQ_', 'xLectroLiqhtnin', 'Opmine', 'ameeero', 'Feitii', 'tqrm', 'Lioness_Rising', 'TTTTTTIAmLAG_OMG', 'gamerboy80', 'cocoasann', 'SHADjust_', 'Beatr', 'Pairel', 'poopoosnake75', 'OhChit'];
-    //     for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
-    // });
+    $('#pp').on('click', () => {
+        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
+        //let igns = ['Manhal_IQ_', 'xLectroLiqhtnin', 'Opmine', 'ameeero', 'Feitii', 'tqrm', 'Lioness_Rising', 'TTTTTTIAmLAG_OMG', 'gamerboy80', 'cocoasann', 'SHADjust_', 'Beatr', 'Pairel', 'poopoosnake75', 'OhChit'];
+        for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
+    });
 
     // $('#pp').on('click', () => {
     //     let thtml = '', tnhtml = '', twhtml = '';
