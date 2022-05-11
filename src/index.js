@@ -202,10 +202,9 @@ function nameColor(api){
         if (api.rank === 'YOUTUBER') return `<span style="color: #FF5555;">[</span><span style="color: #FFFFFF;">YT</span><span style="color: #FF5555;">] ${api.displayname}</span>`;
         else if (api.rank === 'ADMIN') return `<span style="color: #AA0000">[ADMIN] ${api.displayname}</span>`;
         else if (api.rank === 'MODERATOR') return `<span style="color: #00AA00">[MOD] ${api.displayname}</span>`;
-        else if (api.rank === 'HELPER') return `<span style="color: #5555FF">[HELP] ${api.displayname}</span>`;
-        else return api.displayname;
+        else if (api.rank === 'GAME_MASTER') return `<span style="color: #00AA00">[GM] ${api.displayname}</span>`;
     }
-    else if (rank === 'MVP_PLUS'){
+    if (rank === 'MVP_PLUS'){
         if (api.monthlyPackageRank === 'NONE' || !api.hasOwnProperty('monthlyPackageRank')) return `<span style="color: #55FFFF;">[MVP</span><span style="color: ${plus}">+</span><span style="color: #55FFFF;">] ${api.displayname}</span>`;
         else return `<span style="color: #FFAA00;">[MVP</span><span style="color: ${plus}">++</span><span style="color: #FFAA00;">] ${api.displayname}</span>`;
     }
