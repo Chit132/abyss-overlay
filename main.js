@@ -29,9 +29,6 @@ app.whenReady().then(() => {
         if (win.isVisible()) win.hide();
         else{win.showInactive(); win.moveTop();}
     });
-    globalShortcut.register('CommandOrControl+Shift+F9', () => {
-        win.webContents.openDevTools({mode: 'detach'});
-    });
 });
 
 app.on('window-all-closed', () => {

@@ -69,6 +69,7 @@
     "dotenv": "^16.0.1",
     "duplexer3": "^0.1.4",
     "electron-json-config": "^1.5.3",
+    "electron-log": "^4.4.7",
     "encodeurl": "^1.0.2",
     "end-of-stream": "^1.4.4",
     "env-paths": "^2.2.0",
