@@ -14,7 +14,7 @@ const rpc = new DiscordRPC.Client({transport: 'ipc'});
 const AutoGitUpdate = require('auto-git-update');
 const packageJSON = require('../package.json');
 const electron_log = require('electron-log'); electron_log.catchErrors({ showDialog: true }); Object.assign(console, electron_log.functions);
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 try{require('electron-json-config');}
 catch{
