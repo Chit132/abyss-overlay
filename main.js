@@ -3,8 +3,8 @@ const { autoUpdater } = require('electron-updater');
 const shell = require('electron').shell;
 const electron_log = require('electron-log'); electron_log.catchErrors({ showDialog: true }); Object.assign(console, electron_log.functions);
 const isDev = require('electron-is-dev');
-/*const path = require('path');
-const url = require('url');*/
+const path = require('path');
+//const url = require('url');
 
 //const is_mac = process.platform === 'darwin';
 let win, splash;
@@ -63,6 +63,7 @@ autoUpdater.on('update-downloaded', info => {
         message: 'A new update has been downloaded. Updating is strongly recommended! Automatically restart overlay now and install?',
         detail: 'Overlay will automatically restart after update is installed',
         buttons: ['Yes', 'No'],
+        icon: path.join(__dirname, 'assets', 'logo.ico'),
         defaultId: 0,
         checkboxLabel: 'Show update notes in browser'
     }

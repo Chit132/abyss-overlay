@@ -1,17 +1,17 @@
 {
   "name": "abyss-overlay",
   "productName": "Abyss Overlay",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "The Official Abyss Stats Overlay",
-  "homepage": "https://github.com/Chit132/abyss-overlay-stuffs",
+  "homepage": "https://github.com/Chit132/abyss-overlay",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build-installer": "electron-builder --win --x64",
-    "build-installer32": "electron-builder --win --ia32",
+    "build-installer": "electron-builder --win --x64 --ia32",
+    "build-installer-dev": "electron-builder --win --x64",
     "build-mac": "electron-builder --mac",
     "linux": "electron-packager . Abyss-Overlay --platform=linux",
-    "publish": "electron-builder --win --x64 --publish always"
+    "publish": "electron-builder --win --x64 --ia32 --publish always"
   },
   "build": {
     "appId": "abyss-overlay",
@@ -33,6 +33,7 @@
       "oneClick": false
     },
     "mac": {
+      "artifactName": "${productName} Setup v${version}_MAC.${ext}",
       "category": "public.app-category.games",
       "target": [
         "dmg"
@@ -48,7 +49,7 @@
   "author": "Chit",
   "license": "ISC",
   "email": "",
-  "repository": "github:Chit132/abyss-overlay-stuffs",
+  "repository": "github:Chit132/abyss-overlay",
   "devDependencies": {
     "electron": "^12.0.0",
     "electron-builder": "^22.10.5",
