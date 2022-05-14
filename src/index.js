@@ -52,7 +52,6 @@ async function versionCompare(){
 }
 versionCompare().then((uptodate) => {
     if (!uptodate){
-        //if ($('clientbuttons').css('display') !== 'none') $('.updatenotif').css('display', 'block');
         $('#update').css('display', 'inline-block');
         const notification = {
             title: 'UPDATE AVAILABLE!',

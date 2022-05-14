@@ -2,6 +2,7 @@ const { app, BrowserWindow, globalShortcut, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const shell = require('electron').shell;
 const electron_log = require('electron-log'); electron_log.catchErrors({ showDialog: true }); Object.assign(console, electron_log.functions);
+const isDev = require('electron-is-dev');
 /*const path = require('path');
 const url = require('url');*/
 
@@ -32,6 +33,11 @@ app.whenReady().then(() => {
         if (win.isVisible()) win.hide();
         else{win.showInactive(); win.moveTop();}
     });
+    if (isDev) {
+        globalShortcut.register('CommandOrControl+Shift+F9', () => {
+            win.webContents.openDevTools({mode: 'detach'});
+        });
+    }
 });
 
 app.on('window-all-closed', () => {
