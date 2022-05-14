@@ -3,20 +3,25 @@
   "productName": "Abyss Overlay",
   "version": "1.4.2",
   "description": "The Official Abyss Stats Overlay",
-  "homepage": "https://github.com/Chit132/abyss-overlay",
+  "homepage": "https://github.com/Chit132/abyss-overlay-stuffs",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build-installer": "electron-builder --win --x64",
     "build-installer32": "electron-builder --win --ia32",
     "build-mac": "electron-builder --mac",
-    "linux": "electron-packager . Abyss-Overlay --platform=linux"
+    "linux": "electron-packager . Abyss-Overlay --platform=linux",
+    "publish": "electron-builder --win --x64 --publish always"
   },
   "build": {
     "appId": "abyss-overlay",
+    "artifactName": "${productName} Setup v${version} ${arch}.${ext}",
     "win": {
       "target": [
         "nsis"
+      ],
+      "publish": [
+        "github"
       ],
       "icon": "assets/logo.ico"
     },
@@ -43,6 +48,7 @@
   "author": "Chit",
   "license": "ISC",
   "email": "",
+  "repository": "github:Chit132/abyss-overlay-stuffs",
   "devDependencies": {
     "electron": "^12.0.0",
     "electron-builder": "^22.10.5",
@@ -70,6 +76,7 @@
     "duplexer3": "^0.1.4",
     "electron-json-config": "^1.5.3",
     "electron-log": "^4.4.7",
+    "electron-updater": "^5.0.1",
     "encodeurl": "^1.0.2",
     "end-of-stream": "^1.4.4",
     "env-paths": "^2.2.0",
