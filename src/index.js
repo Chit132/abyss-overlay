@@ -871,12 +871,14 @@ function main(event){
         else if (event.data.client === 'vanilla'){logpath = config.get('vanillalog', `${homedir}/Library/Application Support/minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706');}
         else if (event.data.client === 'pvplounge'){logpath = config.get('pvploungelog', `${homedir}/Library/Application Support/.pvplounge/logs/latest.log`); $('#clientimg').attr('src', 'https://www.saashub.com/images/app/service_logos/158/4d406mrxxaj7/large.png?1601167229');}
         else if (event.data.client === 'labymod'){logpath = config.get('labymodlog', `${homedir}/Library/Application Support/minecraft/logs/fml-client-latest.log`); $('#clientimg').attr('src', 'https://www.labymod.net/page/tpl/assets/images/logo_web.png');}
+        else if (event.data.client === 'feather'){logpath = config.get('featherlog', `${homedir}/Library/Application Support/minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://i.imgur.com/9ZfHrCw.png');}
     }
     else{
         if (event.data.client === 'badlion'){logpath = config.get('badlionlog', `${homedir}/AppData/Roaming/.minecraft/logs/blclient/minecraft/latest.log`); $('#clientimg').attr('src', 'https://www.badlion.net/static/assets/images/logos/badlion-logo.png');}
         else if (event.data.client === 'vanilla'){logpath = config.get('vanillalog', `${homedir}/AppData/Roaming/.minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706');}
         else if (event.data.client === 'pvplounge'){logpath = config.get('pvploungelog', `${homedir}/AppData/Roaming/.pvplounge/logs/latest.log`); $('#clientimg').attr('src', 'https://www.saashub.com/images/app/service_logos/158/4d406mrxxaj7/large.png?1601167229');}
         else if (event.data.client === 'labymod'){logpath = config.get('labymodlog', `${homedir}/AppData/Roaming/.minecraft/logs/fml-client-latest.log`); $('#clientimg').attr('src', 'https://www.labymod.net/page/tpl/assets/images/logo_web.png');}
+        else if (event.data.client === 'feather'){logpath = config.get('featherlog', `${homedir}/AppData/Roaming/.minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://i.imgur.com/9ZfHrCw.png');}
     }
     //con.log(logpath);
 
@@ -1405,12 +1407,14 @@ $(() => {
     $('#lunar').on('click', {client: 'lunar'}, main);
     $('#vanilla').on('click', {client: 'vanilla'}, main);
     $('#pvplounge').on('click', {client: 'pvplounge'}, main);
-    $('#labymod').on('click', {client: 'labymod'}, main);
+    $('#feather').on('click', {client: 'feather'}, main);
+    $('#feather').on('click', {client: 'feather'}, main);
     $('#badlion').on('click', () => {config.set('settings.client', 'badlion')});
     $('#lunar').on('click', () => {config.set('settings.client', 'lunar')});
     $('#vanilla').on('click', () => {config.set('settings.client', 'vanilla')});
     $('#pvplounge').on('click', () => {config.set('settings.client', 'pvplounge')});
-    $('#labymod').on('click', () => {config.set('settings.client', 'labymod')});
+    $('#feather').on('click', () => {config.set('settings.client', 'feather')});
+    $('#feather').on('click', () => {config.set('settings.client', 'feather')});
 
     function getBedWarsLevel(exp){
         var level = 100 * (Math.floor(exp / 487000));

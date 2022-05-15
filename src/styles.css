@@ -411,6 +411,10 @@ li{
     background-image: linear-gradient(to right, rgb(14,146,236), rgb(56,182,250), rgb(56,182,250), rgb(14,146,236));
     box-shadow: 0 4px 15px 0 rgb(56,182,250);
 }
+.clientbutton#feather{
+    background-image: linear-gradient(to right, rgb(211, 211, 211), rgb(54, 54, 54), rgb(54, 54, 54), rgb(211, 211, 211));
+    box-shadow: 0 4px 15px 0 rgb(255, 255, 255);
+}
 
 #clientimg{
     height: 26.5px;
