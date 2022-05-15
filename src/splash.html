@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Abyss Overlay</title>
-    <script src="../src/splash.js"></script>
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';"/>
     <style>
         body::-webkit-scrollbar{
@@ -23,6 +22,9 @@
     <video autoplay style="position: absolute; height: 100%; width: 100%;">
         <source src="../assets/splash-screen.mp4" type="video/mp4">
     </video>
-    <p>Version 1.5.0</p>
+    <p>Version <span id="version"></span></p>
+    <script>
+        document.getElementById('version').innerHTML = require('../package.json').version;
+    </script>
 </body>
 </html>

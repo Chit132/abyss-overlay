@@ -1,6 +1,5 @@
-const shell = require('electron').shell;
-const remote = require('electron').remote;
-const {app, BrowserWindow, Notification } = remote;
+const { shell, remote, ipcRenderer } = require('electron');
+const { app, BrowserWindow, Notification } = remote;
 const dialog = remote.require('electron').dialog;
 const fs = require('fs');
 const con = remote.getGlobal('console');
@@ -53,14 +52,13 @@ async function versionCompare(){
 versionCompare().then((uptodate) => {
     if (!uptodate){
         $('#update').css('display', 'inline-block');
-        const notification = {
+        const updatenotif = new Notification({
             title: 'UPDATE AVAILABLE!',
             body: 'To update, join the Discord, click on the update button, or click on this notification!',
             icon: path.join(__dirname, '../assets/logo.ico')
-        };
-        const updatenotif = new Notification(notification);
+        });
         updatenotif.on('click', () => {shell.openExternal('https://discord.gg/7dexcJTyCJ'); shell.openExternal('https://github.com/Chit132/abyss-overlay/releases/latest');});
-        updatenotif.show();
+        if (app.isPackaged) updatenotif.show();
     }
 });
 
@@ -1232,15 +1230,17 @@ $(() => {
     });
     $('#changelogClose').on('click', () => {$('#changelog').css('display', 'none'); config.set('changelog', packageJSON.version);});
 
+    //TESTING AREA
+
     // $('#pp').on('click', () => {
     //     addPlayer('OhChit');
     // });
 
-    $('#pp').on('click', () => {
-        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
-        //let igns = ['Manhal_IQ_', 'xLectroLiqhtnin', 'Opmine', 'ameeero', 'Feitii', 'tqrm', 'Lioness_Rising', 'TTTTTTIAmLAG_OMG', 'gamerboy80', 'cocoasann', 'SHADjust_', 'Beatr', 'Pairel', 'poopoosnake75', 'OhChit'];
-        for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
-    });
+    // $('#pp').on('click', () => {
+    //     let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
+    //     //let igns = ['Manhal_IQ_', 'xLectroLiqhtnin', 'Opmine', 'ameeero', 'Feitii', 'tqrm', 'Lioness_Rising', 'TTTTTTIAmLAG_OMG', 'gamerboy80', 'cocoasann', 'SHADjust_', 'Beatr', 'Pairel', 'poopoosnake75', 'OhChit'];
+    //     for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
+    // });
 
     // $('#pp').on('click', () => {
     //     let thtml = '', tnhtml = '', twhtml = '';
@@ -1260,6 +1260,12 @@ $(() => {
     //     let temp = $('#test').css('height');
     //     con.log(temp);
     // });
+
+    ipcRenderer.on('test', (event, ...arg) => {
+        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
+        //let igns = ['Manhal_IQ_', 'xLectroLiqhtnin', 'Opmine', 'ameeero', 'Feitii', 'tqrm', 'Lioness_Rising', 'TTTTTTIAmLAG_OMG', 'gamerboy80', 'cocoasann', 'SHADjust_', 'Beatr', 'Pairel', 'poopoosnake75', 'OhChit'];
+        for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
+    });
 
 
     const dftcolor = config.get('settings.color', [2, 2, 2, 0.288]);

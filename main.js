@@ -9,7 +9,7 @@ const path = require('path');
 //const is_mac = process.platform === 'darwin';
 let win, splash;
 function createWindow(){
-    splash = new BrowserWindow({width: 400, height: 400, transparent: true, frame: false, alwaysOnTop: true, skipTaskbar: true, show: false});
+    splash = new BrowserWindow({width: 400, height: 400, transparent: true, frame: false, alwaysOnTop: true, skipTaskbar: true, show: false, webPreferences: {nodeIntegration: true, contextIsolation: false}});
     splash.loadFile('src/splash.html');
     win = new BrowserWindow({width: 800, height: 600, show: false, frame: false, transparent: true, resizable: true, useContentSize: true, maximizable: false, minWidth: 400, icon: __dirname+'/assets/logo.ico', alwaysOnTop: true, title: 'Abyss Overlay', focusable: false, skipTaskbar: false, hasShadow: true, webPreferences: {nodeIntegration: true, enableRemoteModule: true, contextIsolation: false}});
     win.loadFile('src/index.html');
@@ -36,6 +36,9 @@ app.whenReady().then(() => {
     if (isDev) {
         globalShortcut.register('CommandOrControl+Shift+F9', () => {
             win.webContents.openDevTools({mode: 'detach'});
+        });
+        globalShortcut.register('Ctrl+Alt+A', () => {
+            win.webContents.send('test', 'hi testing');
         });
     }
 });
