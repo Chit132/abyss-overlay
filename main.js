@@ -1,9 +1,10 @@
-const { app, BrowserWindow, globalShortcut, dialog } = require('electron');
+const { app, BrowserWindow, globalShortcut, dialog, ipcMain } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const shell = require('electron').shell;
 const electron_log = require('electron-log'); electron_log.catchErrors({ showDialog: true }); Object.assign(console, electron_log.functions);
 const isDev = require('electron-is-dev');
 const path = require('path');
+const { exec } = require('child_process');
 //const url = require('url');
 
 //const is_mac = process.platform === 'darwin';
@@ -56,6 +57,7 @@ app.on('activate', () => {
 });
 
 function checkForUpdate() {
+    if (isDev) return;
     if (process.platform === 'win32') autoUpdater.checkForUpdates();
 }
 
@@ -89,4 +91,31 @@ autoUpdater.on('error', (err) => {
     }).then(returned => {
         if (returned.response === 0) shell.openExternal('https://github.com/Chit132/abyss-overlay/releases/latest');
     });
+});
+
+const execPath = app.isPackaged ? path.join(process.resourcesPath, 'app.asar.unpacked', 'exec') : path.join(__dirname, 'exec');
+var forceJAR = false;
+function runJAR(event) {
+    exec('java -jar key-sender.jar slash.w50 w h o enter', { cwd: execPath }, function(error, stdout, stderr) {
+        console.log('jar ran')
+        if (error != null) {
+            console.log('JAR AUTOWHO ERROR:\n' + stderr);
+            console.log(error);
+            event.reply('autowho-err');
+        }
+        else forceJAR = true;
+    });
+}
+ipcMain.on('autowho', (event) => {
+    console.log('autowho');
+    if (!forceJAR && process.platform === 'win32') {
+        exec('wscript autowho.vbs', { cwd: execPath }, function(error, stdout, stderr) {
+            if (error != null) {
+                console.log('VBS AUTOWHO ERROR:\n' + stderr);
+                console.log(error);
+                runJAR(event);
+            }
+        });
+    }
+    else runJAR(event);
 });

@@ -852,14 +852,17 @@ function updateMusic(){
     }});
 }
 
-// function autowho(){
-//     if (config.get('settings.autowho', false)){
-//         robot.startJar();
-//         robot.type('t')
-//         .go()
-//         .then(robot.stopJar);
-//     }
-// }
+function autowho(){
+    if (config.get('settings.autowho', false)) ipcRenderer.send('autowho');
+}
+ipcRenderer.on('autowho-err', () => {
+    config.set('settings.autowho', false);
+    new Notification({
+        title: 'Autowho error',
+        body: 'Autowho was turned off because it could not be run on your PC. Java v8 or above is required',
+        icon: path.join(__dirname, '../assets/logo.ico')
+    }).show();
+});
 
 function main(event){
     currentWindow = remote.BrowserWindow.getAllWindows(); currentWindow = currentWindow[0];
@@ -923,7 +926,7 @@ function main(event){
             }
             else if (msg.indexOf('has joined') !== -1 && msg.indexOf(':') === -1){
                 //con.log(msg);
-                if (inlobby){players = []; sent = true; /*autowho();*/} inlobby = false;
+                if (inlobby){players = []; sent = true; autowho();} inlobby = false;
                 if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, winheight, true); $('#show').css('transform', 'rotate(0deg)');}
                 if ($('#infodiv').css('display') === 'none' && $('#settingsdiv').css('display') === 'none'){$('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block');}
                 if (msg.indexOf('/') !== -1) numplayers = Number(msg.substring(msg.indexOf('(')+1, msg.indexOf('/')));
@@ -942,7 +945,7 @@ function main(event){
                     if (left === players[i].name){players.splice(i, 1); changed = true; updateArray();}
                 }
             }
-            else if (msg.indexOf('Sending you') !== -1 && msg.indexOf(':') === -1){players = []; numplayers = 0; changed = true; sent = true; updateArray(); currentWindow.moveTop(); /*autowho();*/ inlobby = false;}
+            else if (msg.indexOf('Sending you') !== -1 && msg.indexOf(':') === -1){players = []; numplayers = 0; changed = true; sent = true; updateArray(); currentWindow.moveTop(); autowho(); inlobby = false;}
             else if ((msg.indexOf('joined the lobby!') !== -1 || msg.indexOf('rewards!') !== -1) && msg.indexOf(':') === -1) {if (!inlobby){players = [];} inlobby = true; numplayers = 0; changed = true; updateArray(); if (msg.indexOf(user) !== -1 && config.get('settings.shrink', true)){players = []; currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, Math.round(zoom*35), true); $('#show').css('transform', 'rotate(90deg)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none');}}
             else if (msg.indexOf('joined the party') !== -1 && msg.indexOf(':') === -1 && inlobby){
                 let pjoin = msg.split(' ')[0];
@@ -1186,7 +1189,7 @@ $(() => {
     });
     $('#settings').on('click', () => {
         if ($('#settingsdiv').css('display') === 'none'){
-            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', true)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); /*$('#whobtn').prop('checked', config.get('settings.autowho', false));*/
+            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', true)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); $('#whobtn').prop('checked', config.get('settings.autowho', false));
             let tgmode = config.get('settings.bwgmode', ''), tgamemode = config.get('settings.gamemode', 0), trpc = config.get('settings.rpc_stats', 1);
             if (tgmode === '' || tgmode === undefined){$('#overall').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Overall');}
             else if (tgmode === 'eight_one_'){$('#solos').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Solos');}
@@ -1264,9 +1267,8 @@ $(() => {
     // });
 
     ipcRenderer.on('test', (event, ...arg) => {
-        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
-        //let igns = ['Manhal_IQ_', 'xLectroLiqhtnin', 'Opmine', 'ameeero', 'Feitii', 'tqrm', 'Lioness_Rising', 'TTTTTTIAmLAG_OMG', 'gamerboy80', 'cocoasann', 'SHADjust_', 'Beatr', 'Pairel', 'poopoosnake75', 'OhChit'];
-        for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
+        console.log('test');
+        ipcRenderer.send('autowho');
     });
 
 
@@ -1392,9 +1394,9 @@ $(() => {
             app.relaunch(); app.exit(0); app.quit();
         }
     });
-    // $('#whobtn').on('click', () => {
-    //     config.set('settings.autowho', $('#whobtn').prop('checked'));
-    // });
+    $('#whobtn').on('click', () => {
+        config.set('settings.autowho', $('#whobtn').prop('checked'));
+    });
     $('#revertcolor').on('click', () => {
         pickr.setColor('rgba(2, 2, 2, 0.288)');
         $('h1').css({'background': '-webkit-linear-gradient(rgb(153, 0, 255), rgb(212, 0, 255))', 'background-clip': 'text', '-webkit-background-clip': 'text', '-webkit-text-fill-color': 'transparent'});

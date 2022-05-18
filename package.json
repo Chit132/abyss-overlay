@@ -16,6 +16,9 @@
   "build": {
     "appId": "abyss-overlay",
     "artifactName": "${productName} Setup v${version} ${arch}.${ext}",
+    "asarUnpack": [
+      "exec"
+    ],
     "win": {
       "target": [
         "nsis"
