@@ -5,9 +5,7 @@ const electron_log = require('electron-log'); electron_log.catchErrors({ showDia
 const isDev = require('electron-is-dev');
 const path = require('path');
 const { exec } = require('child_process');
-//const url = require('url');
 
-//const is_mac = process.platform === 'darwin';
 let win, splash;
 function createWindow(){
     splash = new BrowserWindow({width: 400, height: 400, transparent: true, frame: false, alwaysOnTop: true, skipTaskbar: true, show: false, webPreferences: {nodeIntegration: true, contextIsolation: false}});
