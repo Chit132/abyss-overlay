@@ -546,12 +546,12 @@ function updateArray(){
 }
 
 function playerAJAX(uuid, ign, e, guild = ''){
-    let api = '';
+    let api = '', got = false;
     $.ajax({type: 'GET', async: true, url: apilink+uuid, success: (data) => {
         if (data.success === true && data.player !== null){
             let tswlvl = -1, tdwins = -1;
             if (data.player.displayname === ign){
-                api = data.player; api.id = uuid; config.set(`players.${ign}`, api); config.set(`players.${ign}.time`, new Date()); setTimeout(clearPlayer, 360000, ign); got = true;
+                api = data.player; api.id = uuid; got = true;
                 if (gamemode === 0){
                     let stars = '<span>[0✫]</span>', ttaghtml = '<li>-</li>', twshtml = '<li style="color: red">?</li>', tfkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tfinalshtml = '<li>0</li>', twinshtml = '<li>0</li>';
                     let avatar = `https://crafatar.com/avatars/${api.id}?size=48&default=MHF_Steve&overlay`;
@@ -639,8 +639,7 @@ function playerAJAX(uuid, ign, e, guild = ''){
         else if (api.player == null){got = true; players.push({name: ign, namehtml: ign, api: null}); updateArray();}
     }, error: (jqXHR) => {
         got = false;
-        if (config.has(`players.${ign}`)){api = config.get(`players.${ign}`); got = true; players.push({name: ign, namehtml: ign, api: api});}
-        else if (jqXHR.responseJSON.cause.indexOf('API key') !== -1) goodkey = false;
+        if (jqXHR.responseJSON.cause.indexOf('API key') !== -1) goodkey = false;
         else players.push({name: ign, namehtml: ign, api: null});
         updateArray();
     }});
@@ -688,12 +687,6 @@ function addPlayer(ign, e = 0){
 function showRotation(matrix){
     let values = matrix.split('(')[1]; values = values.split(')')[0]; values = values.split(',');
     return Math.round(Math.asin(values[1])*(180/Math.PI));
-}
-
-function clearPlayer(ign){
-    let time = new Date();
-    if (time.getTime() - config.get(`players.${ign}.time`).getTime() < 360000) setTimeout(clearPlayer, 360000, ign);
-    else config.delete(`players.${ign}`);
 }
 
 function gameStartNotif(){
