@@ -32,7 +32,7 @@
       "installerIcon": "assets/logo.ico",
       "uninstallerIcon": "assets/logo.ico",
       "uninstallDisplayName": "Abyss Overlay",
-      "license": "license.txt",
+      "license": "LICENSE.txt",
       "oneClick": false
     },
     "mac": {
@@ -50,7 +50,7 @@
   },
   "keywords": [],
   "author": "Chit",
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "email": "",
   "repository": "github:Chit132/abyss-overlay",
   "devDependencies": {

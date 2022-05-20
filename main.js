@@ -92,10 +92,10 @@ autoUpdater.on('error', (err) => {
 });
 
 const execPath = app.isPackaged ? path.join(process.resourcesPath, 'app.asar.unpacked', 'exec') : path.join(__dirname, 'exec');
-var forceJAR = false;
+var forceJAR = true;
 function runJAR(event) {
-    exec('java -jar key-sender.jar slash.w50 w h o enter', { cwd: execPath }, function(error, stdout, stderr) {
-        console.log('jar ran')
+    exec('javaw -jar key-sender.jar slash.w50 w h o enter', { cwd: execPath }, function(error, stdout, stderr) {
+        console.log('jar ran');
         if (error != null) {
             console.log('JAR AUTOWHO ERROR:\n' + stderr);
             console.log(error);

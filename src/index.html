@@ -247,11 +247,13 @@
             <p id="changelogVersion" style="width: 100%; height: 37px; margin: 0; padding: 0; background-color: rgb(75, 75, 75); text-align: center; font-size: 20px; color: var(--primaryColor);">Changelog</p>
             <p id="changelogClose">×</p>
             <p style="height: calc(100% - 37px); margin: 0; margin-left: 5px; padding: 0; overflow-y: auto; color: rgb(179, 179, 179);">
-                - <b>Added Discord Rich Presence.</b> Show off your game activity and stats in your Discord status! Works for BW, SW, and Duels and for overall and session stats. *make sure to open the overlay before MC*<br><br>
-                - <b>Added in-app changelog.</b> What you are looking at right now!<br><br>
-                - <b>Fixed freezing.</b> Fixed freezing on `/who`<br><br>
-                - <b>Fixed disappearing on taskbar.</b> Fixed overlay not going away from taskbar when closed<br><br>
-                - <b>Fixed showing 0 when no deaths/losses.</b> Fixed the glitch when FKDR, KDR, and WLR showed 0 when the denominator was 0
+                - <b>Added autowho.</b> Autowho has been added; the overlay will automatically type /who at the beginning of a game for you! Manually turn it ON in overlay settings if you want to use it. Stand still for a few seconds after queuing so overlay has time to type it. Even though you should be fine, *use it at your own risk!* For MacOS users, Java v8+ is required for this feature!<br><br>
+                - <b>Added auto-updater.</b> Auto-updater for Windows ONLY. Overlay will automatically download new updates, so you won't have to keep downloading new installers after this one. *(MacOS requires code signing, which I don't have the money for lol, so MacOS people please manually update for now, sorry)* So also expect more updates!<br><br>
+                - <b>Added Feather Client support.</b> Feather client is now a supported client. You can change clients in settings<br><br>
+                - <b>Added better debugging functionalities.</b> Making overlay more future-proof<br><br>
+                - <b>Added Gamemaster rank support.</b> Gamemaster ranks will now show up appropriately<br><br>
+                - <b>Fixed showing everyone as nicks.</b> Fixed issue from time to time where everyone showed up as nicks by switching to Mojang API<br><br>
+                - <b>Removed excessive API caching.</b> No longer caching all players' APIs in config file in order to save storage and computational power (potentially could save several MB of storage)
             </p>
         </div>
     </div>

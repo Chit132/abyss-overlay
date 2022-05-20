@@ -511,7 +511,7 @@ ipcRenderer.on('autowho-err', () => {
     config.set('settings.autowho', false);
     new Notification({
         title: 'Autowho error',
-        body: 'Autowho was turned off because it could not be run on your PC. Java v8 or above is required',
+        body: 'Autowho was turned off because it could not be run on your PC. Java v8 or above is required! Check logs for more info',
         icon: path.join(__dirname, '../assets/logo.ico')
     }).show();
 });
