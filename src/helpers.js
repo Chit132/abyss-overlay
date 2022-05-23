@@ -311,27 +311,85 @@ function winsColor(wins){
     catch{return '#AAAAAA';}
 }
 
-function getTag(api, tagslist = []){
-    let temp = false;
-    try{temp = tagslist.find(o => o.uuid === api.id).tag}
-    catch{temp = false;}
-    try{
-        if (api.inParty) return '<li style="color: #03C800">P</li>';
-        else if (api.call) return '<li style="color: #00C2A2">CALL</li>';
-        else if (api.partyReq) return '<li style="color: #37B836">PREQ</li>';
-        else if (api.friendReq) return '<li style="color: #D6D600">FREQ</li>';
-        else if (api.guildList) return '<li style="color: #36C700">GLD</li>';
-        else if (api.id === 'df954981d7204b4d84e19d294f703868') return '<li style="color: #AA00AA">DEV</li>';
-        else if (api.id === '6440f5d5cc30428c812deb892c5cd411') return '<li style="color: #FFB69D">QT♡</li>';
-        else if (api.id === '2b034ebee1514b75a8a67c50d8c7fd29') return '<li style="color: #E998B7">✨</li>';
-        else if (api.id === 'c2291b87d894461daca36be83fc51310' || api.id === '48ed8ffb95ec4647b7c1c5990d40a6f2' || api.id === '9b5aeb7e3d9b43b2b026b2e444da24ff' || api.id === '01f32cf78b1a4d2f8b15b477c65f7fb7' || api.id === '01c59560e6014b9aa84c24877c485f63' || api.id === 'a3cef65ded744b739f8e46db5d87d6a3' || api.id === '2f457183cca44a3ea923a03af37de287') return '<li style="color: #E998B7">QT</li>';
-        else if (api.achievements.bedwars_level < 150 && api.stats.Bedwars.final_deaths_bedwars/api.stats.Bedwars.losses_bedwars < 0.75 && api.stats.Bedwars.final_kills_bedwars/api.stats.Bedwars.final_deaths_bedwars < 1.5) return '<li style="color: #FF5555">SNPR</li>';
-        else if (temp) return temp.replaceAll('[', '<').replaceAll(']', '>').replaceAll("'", '"');
-        else if ((api.achievements.bedwars_level < 15 && api.stats.Bedwars.final_kills_bedwars/api.stats.Bedwars.final_deaths_bedwars > 5) || (api.achievements.bedwars_level > 15 && api.achievements.bedwars_level < 100 && api.achievements.bedwars_level/(api.stats.Bedwars.final_kills_bedwars/api.stats.Bedwars.final_deaths_bedwars) <= 5)) return '<li style="color: #5555FF">ALT</li>';
-        else if (api.channel === 'PARTY') return '<li style="color: #FFB900">PRTY</li>';
-        else return '<li style="color: #AAAAAA">-</li>';
-    }
-    catch{return '<li style="color: #AAAAAA">-</li>';}
+function getTag(api, tagslist = []) {
+  let temp = false;
+  try {
+    temp = tagslist.find((o) => o.uuid === api.id).tag;
+  } catch {
+    temp = false;
+  }
+  try {
+    if (api.inParty) return '<li style="color: #03C800">P</li>';
+    else if (api.id === "7471ecfba7234c099f32f39e0eebe6db")
+      return '<li style="color: #3900FF">:sparkles:</li>';
+    else if (api.call) return '<li style="color: #00C2A2">CALL</li>';
+    else if (api.partyReq) return '<li style="color: #37B836">PREQ</li>';
+    else if (api.friendReq) return '<li style="color: #D6D600">FREQ</li>';
+    else if (api.guildList) return '<li style="color: #36C700">GLD</li>';
+    else if (
+      api.id === "477deb6bc0924bd78741b42ce9f8a78f" || // EsMario
+      api.id === "afc13e04815d403a8f05f6f2e3495309" || // Noixi
+      api.id === "1afbfd0295074d4f850878d89a58d9ea" || // Xx_Tomm4_xX
+      api.id === "8efb35de616843898bdbe9a91980f3ac" || //naitsabes00701
+      api.id === "1db8fc3f6dc7422c9c61997de6809f29" || // ItsAlmostHere
+      api.id === "d07a8526afd04c54b13dc8af93fecafd" || //SkrufbG
+      api.id === "6680250efcda4a5da6b6a9be8487ed78" || // Sada_
+      api.id === "70c091504cb24750ae44a06d3482b974" || // FredWood1010
+      api.id === "a07999b88c684832a8e8e7222e297232" || // FraaaaX
+      api.id === "d923c1d96a55428e9537d5f99d4eee70" || // TrinaAsh
+      api.id === "f9cc8c9707d34a43b2473064167ed522" // IUseKurkku
+    )
+      return '<li style="color: #FF0000">BOT</li>';
+    else if (api.id === "df954981d7204b4d84e19d294f703868")
+      return '<li style="color: #AA00AA">DEV</li>';
+    else if (api.id === "7471ecfba7234c099f32f39e0eebe6db")
+      return '<li style="color: #FFB69D">QT♡</li>';
+    else if (api.id === "2b034ebee1514b75a8a67c50d8c7fd29")
+      return '<li style="color: #E998B7">:sparkles:</li>';
+    else if (
+      api.id === "c2291b87d894461daca36be83fc51310" ||
+      api.id === "48ed8ffb95ec4647b7c1c5990d40a6f2" ||
+      api.id === "9b5aeb7e3d9b43b2b026b2e444da24ff" ||
+      api.id === "01f32cf78b1a4d2f8b15b477c65f7fb7" ||
+      api.id === "01c59560e6014b9aa84c24877c485f63" ||
+      api.id === "a3cef65ded744b739f8e46db5d87d6a3" ||
+      api.id === "2f457183cca44a3ea923a03af37de287"
+    )
+      return '<li style="color: #E998B7">QT</li>';
+    else if (
+      api.achievements.bedwars_level < 150 &&
+      api.stats.Bedwars.final_deaths_bedwars /
+        api.stats.Bedwars.losses_bedwars <
+        0.75 &&
+      api.stats.Bedwars.final_kills_bedwars /
+        api.stats.Bedwars.final_deaths_bedwars <
+        1.5
+    )
+      return '<li style="color: #FF5555">SNPR</li>';
+    else if (temp)
+      return temp
+        .replaceAll("[", "<")
+        .replaceAll("]", ">")
+        .replaceAll("'", '"');
+    else if (
+      (api.achievements.bedwars_level < 15 &&
+        api.stats.Bedwars.final_kills_bedwars /
+          api.stats.Bedwars.final_deaths_bedwars >
+          5) ||
+      (api.achievements.bedwars_level > 15 &&
+        api.achievements.bedwars_level < 100 &&
+        api.achievements.bedwars_level /
+          (api.stats.Bedwars.final_kills_bedwars /
+            api.stats.Bedwars.final_deaths_bedwars) <=
+          5)
+    )
+      return '<li style="color: #5555FF">ALT</li>';
+    else if (api.channel === "PARTY")
+      return '<li style="color: #FFB900">PRTY</li>';
+    else return '<li style="color: #AAAAAA">-</li>';
+  } catch {
+    return '<li style="color: #AAAAAA">-</li>';
+  }
 }
 
 function NWL(exp){
