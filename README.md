@@ -80,4 +80,4 @@
 The Abyss Overlay is made by Chit (OhChit). <br>
 Join the [Discord](https://discord.gg/eDnHTT3aBS) and look in the overlay category to receive overlay updates, announcements, report bugs, and make suggestions. <br>
 *Any help is appreciated :D* <br>
-**Contact me on Discord by joining the server and [messaging](https://discord.com/users/338395595599249409) or @ing me**
+**Contact me on Discord by joining the server and [messaging](https://discord.com/users/338395595599249409) or @ping me!**
