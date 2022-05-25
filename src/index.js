@@ -306,7 +306,7 @@ function playerAJAX(uuid, ign, e, guild = ''){
 
 function addPlayer(ign, e = 0){
     let uuid = '';
-    ign = ign.replace(/§([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
+    ign = ign.replace(/(§|�)([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
     console.log(`Adding player: ${ign}`);
     $.ajax({type: 'GET', async: true, url: mojang+ign, success: (data, status) => {
         if (status === 'success'){
