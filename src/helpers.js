@@ -33,7 +33,7 @@ function starColor(stars){
         else if (stars < 2800) return `<span style="color: #FFFF55">[2</span><span style="color: #FFFFFF">7${Math.floor((stars-2700)/10)}</span><span style="color: #555555">${stars%10}⚝]</span>`;
         else if (stars < 2900) return `<span style="color: #55FF55">[2</span><span style="color: #00AA00">8${Math.floor((stars-2800)/10)}</span><span style="color: #FFAA00">${stars%10}⚝</span><span style="color: #FF5555">]</span>`;
         else if (stars < 3000) return `<span style="color: #55FFFF">[2</span><span style="color: #00AAAA">9${Math.floor((stars-2900)/10)}</span><span style="color: #5555FF">${stars%10}⚝</span><span style="color: #0000AA">]</span>`;
-        else return `<span style="color: #FFFF55">[3</span><span style="color: #FFAA00">${Math.floor((stars-3000)/10)}</span><span style="color: #FF5555">${stars%10}⚝</span><span style="color: #AA0000">]</span>`;
+        else return `<span style="color: #FFFF55">[3</span><span style="color: #FFAA00">${Math.floor((stars-3000)/10)>100?Math.floor((stars-3000)/10):'0'+Math.floor((stars-3000)/10)}</span><span style="color: #FF5555">${stars%10}⚝</span><span style="color: #AA0000">]</span>`;
     }
     else if (gamemode === 1){
         if (stars < 5) return `<span style="color: #AAAAAA;">[${stars}⚔]</span>`;
