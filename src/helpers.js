@@ -1,5 +1,22 @@
 const config = require('electron-json-config');
 
+const HypixelColors = {
+    "RED": "#FF5555",
+    "GOLD": "#FFAA00",
+    "GREEN": "#55FF55",
+    "YELLOW": "#FFFF55",
+    "LIGHT_PURPLE": "#FF55FF",
+    "WHITE": "#FFFFFF",
+    "BLUE": "#5555FF",
+    "DARK_GREEN": "#00AA00",
+    "DARK_RED": "#AA0000",
+    "DARK_AQUA": "#00AAAA",
+    "DARK_PURPLE": "#AA00AA",
+    "DARK_GRAY": "#555555",
+    "BLACK": "#000000",
+    "DARK_BLUE": "#0000AA"
+}
+
 function starColor(stars){
     let gamemode = config.get('settings.gamemode', 0);
     if (gamemode === 0){
@@ -103,20 +120,7 @@ function nameColor(api){
     let rank = api.newPackageRank;
     let plus = api.rankPlusColor;
     if (plus !== undefined){
-        if (plus === 'RED') plus = '#FF5555';
-        else if (plus === 'GOLD') plus = '#FFAA00';
-        else if (plus === 'GREEN') plus = '#55FF55';
-        else if (plus === 'YELLOW') plus = '#FFFF55';
-        else if (plus === 'LIGHT_PURPLE') plus = '#FF55FF';
-        else if (plus === 'WHITE') plus = '#FFFFFF';
-        else if (plus === 'BLUE') plus = '#5555FF';
-        else if (plus === 'DARK_GREEN') plus = '#00AA00';
-        else if (plus === 'DARK_RED') plus = '#AA0000';
-        else if (plus === 'DARK_AQUA') plus = '#00AAAA';
-        else if (plus === 'DARK_PURPLE') plus = '#AA00AA';
-        else if (plus === 'DARK_GRAY') plus = '#555555';
-        else if (plus === 'BLACK') plus = '#000000';
-        else if (plus === 'DARK_BLUE') plus = '#0000AA';
+        HypixelColors[plus] = api.rankPlusColor;
     }
     else plus = '#FF5555';
     if (api.rank !== undefined){
@@ -133,14 +137,6 @@ function nameColor(api){
     else if (rank === 'VIP_PLUS') return `<span style="color: #55FF55;">[VIP</span><span style="color: #FFAA00;">+</span><span style="color: #55FF55;">] ${api.displayname}</span>`;
     else if (rank === 'VIP') return `<span style="color: #55FF55;">[VIP] ${api.displayname}</span>`;
     else return `<span style="color: #AAAAAA;">${api.displayname}</span>`;
-}
-
-function guildColor(color){
-    if (color === 'GOLD') return '#FFAA00';
-    else if (color === 'DARK_AQUA') return '#00AAAA';
-    else if (color === 'DARK_GREEN') return '#00AA00';
-    else if (color === 'YELLOW') return '#FFFF55';
-    else return '#AAAAAA';
 }
 
 function wsColor(ws){
@@ -359,5 +355,5 @@ function swLVL(xp){
 }
 
 module.exports = {
-    starColor, nameColor, guildColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL
+    starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, HypixelColors
 }
