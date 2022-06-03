@@ -1,6 +1,6 @@
 const config = require('electron-json-config');
 
-const MCColorNames = {
+const HypixelColors = {
     "RED": "#FF5555",
     "GOLD": "#FFAA00",
     "GREEN": "#55FF55",
@@ -120,7 +120,7 @@ function nameColor(api){
     let rank = api.newPackageRank;
     let plus = api.rankPlusColor;
     if (plus !== undefined){
-        MCColorNames[plus] = api.rankPlusColor;
+        HypixelColors[plus] = api.rankPlusColor;
     }
     else plus = '#FF5555';
     if (api.rank !== undefined){
@@ -355,5 +355,5 @@ function swLVL(xp){
 }
 
 module.exports = {
-    starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, MCColorNames
+    starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, HypixelColors
 }

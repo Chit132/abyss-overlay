@@ -25,7 +25,7 @@ catch{
     }
 }
 const config = require('electron-json-config');
-const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, MCColorNames } = require('./helpers.js');
+const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, HypixelColors } = require('./helpers.js');
 
 
 config.delete('players');
@@ -317,7 +317,7 @@ function addPlayer(ign, e = 0){
                     if (data.success === true && data.guild){
                         $.ajax({type: 'GET', async: true, url: `https://api.hypixel.net/guild?key=${key}&id=${data.guild}`, success: (data) => {
                             if (data.success === true && data.guild){
-                                if (data.guild.tag) guild = ` <span style="color: ${MCColorNames[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
+                                if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
                             }
                             playerAJAX(uuid, ign, e, guild);
                         }, error: () => {
