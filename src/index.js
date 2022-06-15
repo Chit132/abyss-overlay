@@ -1,6 +1,5 @@
 const { shell, remote, ipcRenderer } = require('electron');
-const { app, BrowserWindow, Notification } = remote;
-const dialog = remote.require('electron').dialog;
+const { app, BrowserWindow, Notification, dialog } = remote;
 const fs = require('fs');
 const con = remote.getGlobal('console');
 const homedir = app.getPath('home').replaceAll('\\', '/');
@@ -29,14 +28,17 @@ const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsCol
 
 
 config.delete('players');
-const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP;
-var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, mojang = 'https://api.mojang.com/users/profiles/minecraft/', goodkey = true, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
+var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
 
 function updateTags(){
     $.ajax({type: 'GET', async: true, url: `${tagsIP}/gimmeusers`, success: (data) => {
         tagslist = JSON.parse(data);
+        overlayAPIdown = false;
+    }, error: () => {
+        overlayAPIdown = true;
     }});
 }
 updateTags();
@@ -76,6 +78,9 @@ function verifyKey(){
                 }
             }});
         }
+    }, error: (jqXHR) => {
+        if (jqXHR.status === 0) apiDown = true;
+        updateArray();
     }});
 }
 verifyKey();
@@ -83,8 +88,10 @@ verifyKey();
 function updateHTML(){
     let namehtml = '', taghtml = ''; wshtml = '', fkdrhtml = '', wlrhtml = '', bblrhtml = '', finalshtml = '', winshtml = '';
     //con.log('changing 1');
-    if (!goodfile){namehtml += '<li style="color: #FF0000">NO CLIENT PATH FOUND</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">MISSING CLIENT LOGS FILE</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
-    else if (!goodkey){namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">RUN COMMAND "/api new"</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
+    if (!goodfile) {namehtml += '<li style="color: #FF0000">NO CLIENT PATH FOUND</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">MISSING CLIENT LOGS FILE</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
+    else if (apiDown) {}
+    else if (!goodkey) {namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">RUN COMMAND "/api new"</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
+    else if (keyThrottle) {}
     for (let i = 0; i < players.length; i++){
         //con.log(players[i].name);
         let stars = '', starsColor = '#AAAAAA'; avatar = 'https://crafatar.com/avatars/ec561538f3fd461daff5086b22154bce?size=48&default=MHF_Steve&overlay';//tagColor = '#AAAAAA';
@@ -121,6 +128,7 @@ function updateHTML(){
         }
     }
     //con.log('changing 2');
+    if (keyThrottle) {}
     if (numplayers === 0){
         $('#playertitle').html('PLAYERS');
         $('#playertitle').css('color', 'var(--primaryColor)');
@@ -207,6 +215,7 @@ function updateArray(){
 function playerAJAX(uuid, ign, e, guild = ''){
     let api = '', got = false;
     $.ajax({type: 'GET', async: true, url: apilink+uuid, success: (data) => {
+        apiDown = false;
         if (data.success === true && data.player !== null){
             let tswlvl = -1, tdwins = -1;
             if (data.player.displayname === ign){
@@ -291,20 +300,22 @@ function playerAJAX(uuid, ign, e, guild = ''){
                     let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;">${level} ${nameColor(api)}${guild}</li>`;
                     players.push({name: ign, api: api, dwins: tdwins, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
                 }
-                updateArray();
             }
-            else{got = true; players.push({name: ign, namehtml: ign, api: null}); updateArray();}
+            else{got = true; players.push({name: ign, namehtml: ign, api: null});}
+            updateArray();
         }
         else if (api.player == null){got = true; players.push({name: ign, namehtml: ign, api: null}); updateArray();}
     }, error: (jqXHR) => {
         got = false;
-        if (jqXHR.responseJSON.cause.indexOf('API key') !== -1) goodkey = false;
-        else players.push({name: ign, namehtml: ign, api: null});
+        if (jqXHR.status === 0) apiDown = true; 
+        else if (jqXHR.status === 403) goodkey = false;
+        else if (jqXHR.status === 429) keyThrottle = true;
+        else {apiDown = true; players.push({name: ign, namehtml: ign, api: null})};
         updateArray();
     }});
 }
 
-function addPlayer(ign, e = 0){
+function addPlayer(ign = '', e = 0){
     let uuid = '';
     ign = ign.replace(/(§|�)([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
     console.log(`Adding player: ${ign}`);
@@ -913,14 +924,24 @@ $(() => {
     //     $('#tag').html(thtml); $('#ign').html(tnhtml); $('#ws').html(twhtml);
     // });
 
-    // $('#ppp').on('click', () => {
-    //     let temp = $('#test').css('height');
-    //     con.log(temp);
-    // });
-
     ipcRenderer.on('test', (event, ...arg) => {
         console.log('test');
-        ipcRenderer.send('autowho');
+        // let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
+        // for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
+
+        //ipcRenderer.send('autowho');
+
+        $.ajax({type: 'GET', async: true, url: `http://tags.abyssoverlay.com:26598/gimmeusers`, success: (data) => {
+            console.log('success');
+            apiDown = false; keyThrottle = false;
+        }, error: (jqXHR) => {
+            console.log(jqXHR);
+            if (jqXHR.status === 0) apiDown = true; 
+            else if (jqXHR.status === 403) goodkey = false;
+            else if (jqXHR.status === 429) keyThrottle = true;
+            else players.push({name: ign, namehtml: ign, api: null});
+            updateArray();
+        }});
     });
 
 
