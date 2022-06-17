@@ -804,6 +804,7 @@ function main(event){
 }
 
 $(() => {
+    const { ModalWindow } = require('./modalWindow.js');
     if (config.get('settings.client', -1) !== -1){
         let tevent = {data: {client: config.get('settings.client')}};
         main(tevent);
@@ -931,17 +932,22 @@ $(() => {
 
         //ipcRenderer.send('autowho');
 
-        $.ajax({type: 'GET', async: true, url: `http://tags.abyssoverlay.com:26598/gimmeusers`, success: (data) => {
-            console.log('success');
-            apiDown = false; keyThrottle = false;
-        }, error: (jqXHR) => {
-            console.log(jqXHR);
-            if (jqXHR.status === 0) apiDown = true; 
-            else if (jqXHR.status === 403) goodkey = false;
-            else if (jqXHR.status === 429) keyThrottle = true;
-            else players.push({name: ign, namehtml: ign, api: null});
-            updateArray();
-        }});
+        // $.ajax({type: 'GET', async: true, url: `http://tags.abyssoverlay.com:26598/gimmeusers`, success: (data) => {
+        //     console.log('success');
+        //     apiDown = false; keyThrottle = false;
+        // }, error: (jqXHR) => {
+        //     console.log(jqXHR);
+        //     if (jqXHR.status === 0) apiDown = true; 
+        //     else if (jqXHR.status === 403) goodkey = false;
+        //     else if (jqXHR.status === 429) keyThrottle = true;
+        //     else players.push({name: ign, namehtml: ign, api: null});
+        //     updateArray();
+        // }});
+
+        ModalWindow.open({
+            title: 'Hello modal window',
+            content: 'Please tell me this modal window actually worked dude. I tried something new with JS and am hoping this works first try'
+        });
     });
 
 
