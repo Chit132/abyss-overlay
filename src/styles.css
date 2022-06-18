@@ -889,6 +889,7 @@ input:checked + .slider:before{
     align-items: center;
     justify-content: center;
     pointer-events: none;
+    z-index: 2;
 }
 .modal_window {
     max-width: 50%;

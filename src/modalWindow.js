@@ -1,9 +1,13 @@
 window.$ = window.jQuery = require('jquery');
 
 const ModalWindow = {
+    keyThrottle: false,
+    APIdown: false,
+    DBdown: false,
+
     getHTML: function(HTMLoptions) {
         return `
-        <div class="modal_overlay">
+        <div class="modal_overlay ${HTMLoptions.class}">
             <div class="modal_window">
                 <div class="modal_titlebar" style="background: ${HTMLoptions.colors.background}">
                     <span class="modal_icon material-icons" style="color: ${HTMLoptions.colors.title}">${HTMLoptions.icon}</span>
@@ -42,6 +46,27 @@ const ModalWindow = {
             };
             options.icon = 'info';
         }
+        if (options.class === -1) {
+            if (this.keyThrottle) {
+                return;
+            }
+            options.class = 'err-key-throttle';
+            this.keyThrottle = true;
+        } else if (options.class === -2) {
+            if (this.APIdown) {
+                return;
+            }
+            options.class = 'err-api-down';
+            this.APIdown = true;
+        } else if (options.class === -3) {
+            if (this.DBdown) {
+                return;
+            }
+            options.class = 'err-db-down';
+            this.DBdown = true;
+        } else {
+            options.class = '';
+        }
         options = Object.assign({
             title: 'Modal window',
             content: 'Hello! Umm this should not have showed up. Ignore it please <3',
@@ -52,11 +77,12 @@ const ModalWindow = {
     },
 
     close: function() {
-        console.log($(this).parent().parent().parent().hasClass('modal_overlay'))
         $(this).parent().parent().parent().remove();
+    },
+
+    initialize: function() {
+        $(document.body).on('click', '.modal_close', this.close);
     }
 };
-
-$(document.body).on('click', '.modal_close', ModalWindow.close);
 
 module.exports = { ModalWindow };

@@ -25,6 +25,7 @@ catch{
 }
 const config = require('electron-json-config');
 const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, HypixelColors } = require('./helpers.js');
+const { ModalWindow } = require('./modalWindow.js');
 
 
 config.delete('players');
@@ -89,9 +90,23 @@ function updateHTML(){
     let namehtml = '', taghtml = ''; wshtml = '', fkdrhtml = '', wlrhtml = '', bblrhtml = '', finalshtml = '', winshtml = '';
     //con.log('changing 1');
     if (!goodfile) {namehtml += '<li style="color: #FF0000">NO CLIENT PATH FOUND</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">MISSING CLIENT LOGS FILE</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
-    else if (apiDown) {}
+    else if (apiDown) {
+        ModalWindow.open({
+            title: 'Hypixel API Down',
+            content: 'The Hypixel API is currently unreachable! It may be down or under maintainence. Stats will not show up until the API is back, but the overlay can still show some nicked players',
+            type: -1,
+            class: -2
+        });
+    }
     else if (!goodkey) {namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">RUN COMMAND "/api new"</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
-    else if (keyThrottle) {}
+    else if (keyThrottle) {
+        ModalWindow.open({
+            title: 'Hypixel API Key Throttle',
+            content: 'You are looking up too many players too quickly! Hypixel has ratelimited your API key for around 1 minute. Try not to search for too many players too quickly: ~60 players per minute max',
+            type: -1,
+            class: -1
+        });
+    }
     for (let i = 0; i < players.length; i++){
         //con.log(players[i].name);
         let stars = '', starsColor = '#AAAAAA'; avatar = 'https://crafatar.com/avatars/ec561538f3fd461daff5086b22154bce?size=48&default=MHF_Steve&overlay';//tagColor = '#AAAAAA';
@@ -128,7 +143,6 @@ function updateHTML(){
         }
     }
     //con.log('changing 2');
-    if (keyThrottle) {}
     if (numplayers === 0){
         $('#playertitle').html('PLAYERS');
         $('#playertitle').css('color', 'var(--primaryColor)');
@@ -215,7 +229,7 @@ function updateArray(){
 function playerAJAX(uuid, ign, e, guild = ''){
     let api = '', got = false;
     $.ajax({type: 'GET', async: true, url: apilink+uuid, success: (data) => {
-        apiDown = false;
+        keyThrottle = false; apiDown = false; ModalWindow.keyThrottle = false; ModalWindow.APIdown = false;
         if (data.success === true && data.player !== null){
             let tswlvl = -1, tdwins = -1;
             if (data.player.displayname === ign){
@@ -804,7 +818,16 @@ function main(event){
 }
 
 $(() => {
-    const { ModalWindow } = require('./modalWindow.js');
+    ModalWindow.initialize();
+    if (overlayAPIdown) {
+        ModalWindow.open({
+            title: 'Abyss Overlay API Down',
+            content: 'The Abyss Overlay API is currently unreachable! It is likely under maintainence and will be back up soon. Tags and/or music might not function properly right now',
+            type: -2,
+            class: -3
+        });
+    }
+
     if (config.get('settings.client', -1) !== -1){
         let tevent = {data: {client: config.get('settings.client')}};
         main(tevent);
@@ -946,7 +969,8 @@ $(() => {
 
         ModalWindow.open({
             title: 'Hello modal window',
-            content: 'Please tell me this modal window actually worked dude. I tried something new with JS and am hoping this works first try'
+            content: 'Please tell me this modal window actually worked dude. I tried something new with JS and am hoping this works first try', // optional
+            type: 1 // 1 for success, -1 for error, -2 for warning, leave blank for general info
         });
     });
 
@@ -998,7 +1022,11 @@ $(() => {
         gamemode = 1; config.set('settings.gamemode', 1); let tplayers = players; players = []; updateArray(); for (let i = 0, len = tplayers.length; i < len; i++){addPlayer(tplayers[i].name);}
     });
     $('#duels').on('click', () => {
-        dialog.showMessageBox(currentWindow, {title: 'PLEASE READ', detail: 'Hypixel has PATCHED any legitimate form of being able to check the stats of your opponents in any duels gamemode! Therefore, to keep the overlay legal and prevent the user from getting banned, you will no longer be able to see the stats of your opponents in a duels lobby. However, you can still use this feature to check opponents\'s duels stats in any other gamemode. Thanks <3\n\nTL;DR: you cannot see the stats of your opponents in duels to abide by the rules, but you can still see duels stats in other gamemodes.', type: 'warning'});
+        ModalWindow.open({
+            title: 'IMPORTANT Duels Update',
+            content: "Hypixel has PATCHED any legitimate form of being able to check the stats of your opponents in any duels gamemode! Therefore, to keep the overlay legal and prevent the you from getting banned, you will no longer be able to see the stats of your opponents in a duels lobby. However, you can still use this feature to check opponents's duels stats in any other gamemode. Thanks <3<br>TL;DR: you cannot see the stats of your opponents in duels to abide by the rules, but you can still see duels stats in other gamemodes.",
+            type: -2
+        });
         $('#gamemodebtn').find('.custom-select').find('.custom-options').find('.custom-option').removeClass('selected'); $('#duels').addClass('selected'); $('#gamemodebtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Duels');
         $('#ws_nwl').html('WS'); $('#kdr').html('KDR'); $('#kills').html('KILLS');
         gamemode = 2; config.set('settings.gamemode', 2); let tplayers = players; players = []; updateArray(); for (let i = 0, len = tplayers.length; i < len; i++){addPlayer(tplayers[i].name);}
@@ -1266,7 +1294,7 @@ $(() => {
         $.ajax({type: 'GET', async: true, dataType: 'json', url: `${musicIP}/requestMusicSession?uuid=${useruuid}`, success: (data) => {
             if (data.success === true){
                 $('.musicintro').css('display', 'none'); $('.musicplaying').css('display', 'block'); $('.musicbutton').css('display', 'inline-block');
-                dialog.showMessageBox(currentWindow, {title: 'Music Session Created!', detail: 'Check your ping in the Abyss Overlay Discord server to continue <3'});
+                ModalWindow.open({ title: 'Music Session Created', content: 'Check your ping in the Abyss Overlay Discord server to continue <3', type: 1 });
                 music.session = true;
                 music.updatetimer = setInterval(updateMusic, 5000);
             }
