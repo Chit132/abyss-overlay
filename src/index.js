@@ -950,22 +950,22 @@ $(() => {
 
     ipcRenderer.on('test', (event, ...arg) => {
         console.log('test');
-        // let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
-        // for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
+        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
+        for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
 
         //ipcRenderer.send('autowho');
 
-        // $.ajax({type: 'GET', async: true, url: `http://tags.abyssoverlay.com:26598/gimmeusers`, success: (data) => {
-        //     console.log('success');
-        //     apiDown = false; keyThrottle = false;
-        // }, error: (jqXHR) => {
-        //     console.log(jqXHR);
-        //     if (jqXHR.status === 0) apiDown = true; 
-        //     else if (jqXHR.status === 403) goodkey = false;
-        //     else if (jqXHR.status === 429) keyThrottle = true;
-        //     else players.push({name: ign, namehtml: ign, api: null});
-        //     updateArray();
-        // }});
+        $.ajax({type: 'GET', async: true, url: `http://tags.abyssoverlay.com:26598/gimmeusers`, success: (data) => {
+            console.log('success');
+            apiDown = false; keyThrottle = false;
+        }, error: (jqXHR) => {
+            console.log(jqXHR);
+            if (jqXHR.status === 0) apiDown = true; 
+            else if (jqXHR.status === 403) goodkey = false;
+            else if (jqXHR.status === 429) keyThrottle = true;
+            else players.push({name: ign, namehtml: ign, api: null});
+            updateArray();
+        }});
 
         ModalWindow.open({
             title: 'Hello modal window',

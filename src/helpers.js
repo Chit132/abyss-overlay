@@ -15,7 +15,7 @@ const HypixelColors = {
     "DARK_GRAY": "#555555",
     "BLACK": "#000000",
     "DARK_BLUE": "#0000AA"
-}
+};
 
 function starColor(stars){
     let gamemode = config.get('settings.gamemode', 0);
@@ -120,7 +120,7 @@ function nameColor(api){
     let rank = api.newPackageRank;
     let plus = api.rankPlusColor;
     if (plus !== undefined){
-        HypixelColors[plus] = api.rankPlusColor;
+        plus = HypixelColors[plus];
     }
     else plus = '#FF5555';
     if (api.rank !== undefined){
