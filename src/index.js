@@ -1,4 +1,4 @@
-const { shell, remote, ipcRenderer } = require('electron');
+const { shell, remote, ipcRenderer, clipboard } = require('electron');
 const { app, BrowserWindow, Notification, dialog } = remote;
 const fs = require('fs');
 const con = remote.getGlobal('console');
@@ -66,10 +66,12 @@ versionCompare().then((uptodate) => {
     }
 });
 
-function verifyKey(){
+function verifyKey($apiElement = false) {
     $.ajax({type: 'GET', async: false, url: 'https://api.hypixel.net/key?key='+key, success: (data) => {
-        if (data.success === true){
-            keygot = true;
+        if (data.success === true) {
+            goodkey = true;
+            apilink = `https://api.hypixel.net/player?key=${key}&uuid=`;
+            config.set('key', key);
             useruuid = data.record.owner.replaceAll('-', '');
             $.ajax({type: 'GET', async: false, url: `https://api.mojang.com/user/profiles/${data.record.owner}/names`, success: (names) => {user = names[names.length-1].name;}});
             $.ajax({type: 'GET', async: false, url: apilink+useruuid, success: (data) => {
@@ -78,13 +80,24 @@ function verifyKey(){
                     starttime = new Date();
                 }
             }});
-        }
+            $('#api_key').val(key);
+            if ($apiElement) {
+                ModalWindow.open({ title: 'API Key Accepted!', type: 1 });
+                $apiElement.css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 6px white', 'color': 'transparent'} );
+            }
+        } else goodkey = false;
     }, error: (jqXHR) => {
         if (jqXHR.status === 0) apiDown = true;
+        goodkey = false;
+        if ($apiElement) {
+            $apiElement.val('');
+            $apiElement.css({ 'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' });
+            if (jqXHR.status !== 0) ModalWindow.open({ title: 'Invalid API Key', content: 'The entered API key is either invalid or it expired! Generate a new one using command "<b>/api new</b>" on Hypixel.', type: -1 });
+        }
         updateArray();
     }});
+    updateHTML();
 }
-verifyKey();
 
 function updateHTML(){
     let namehtml = '', taghtml = ''; wshtml = '', fkdrhtml = '', wlrhtml = '', bblrhtml = '', finalshtml = '', winshtml = '';
@@ -98,7 +111,7 @@ function updateHTML(){
             class: -2
         });
     }
-    else if (!goodkey) {namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">RUN COMMAND "/api new"</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
+    else if (!goodkey) {namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">RUN COMMAND "/api new"</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">OR ENTER IT IN SETTINGS</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
     else if (keyThrottle) {
         ModalWindow.open({
             title: 'Hypixel API Key Throttle',
@@ -566,15 +579,7 @@ function main(event){
     if (fs.existsSync(logpath)) filegot = true;
     if (!filegot) goodfile = false;
 
-    let keygot = false;
-    $.ajax({type: 'GET', async: false, url: 'https://api.hypixel.net/key?key='+key, success: (data) => {
-        if (data.success === true){
-            keygot = true;
-            $.ajax({type: 'GET', async: false, url: `https://api.mojang.com/user/profiles/${data.record.owner}/names`, success: (names) => {user = names[names.length-1].name;}});
-        }
-    }});
-    if (!keygot) goodkey = false;
-    updateHTML();
+    verifyKey();
 
     const tail = new Tail(logpath, {/*logger: con, */useWatchFile: true, nLines: 1, fsWatchOptions: {interval: 100}});
     tail.on('line', (data) => {
@@ -709,7 +714,7 @@ function main(event){
             }
             else if ((msg.indexOf('reconnected') !== -1) && msg.indexOf(':') === -1) sent = false;
             else if (msg.indexOf('The game starts in 1 second!') !== -1 && msg.indexOf(':') === -1){if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, Math.round(zoom*35), true); $('#show').css('transform', 'rotate(90deg)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none');} gameStartNotif();}
-            else if (msg.indexOf('new API key') !== -1 && msg.indexOf(':') === -1){key = msg.substring(msg.indexOf('is ')+3); config.set('key', key); apilink = `https://api.hypixel.net/player?key=${key}&uuid=`; goodkey = true; verifyKey(); updateHTML();}
+            else if (msg.indexOf('new API key') !== -1 && msg.indexOf(':') === -1){key = msg.substring(msg.indexOf('is ')+3); config.set('key', key); apilink = `https://api.hypixel.net/player?key=${key}&uuid=`; goodkey = true; verifyKey($('#api_key')); updateHTML();}
             else if (msg.indexOf('Guild Name: ') === 0 && inlobby){
                 guildlist = true; guildtag = false;
                 if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, winheight, true); $('#show').css('transform', 'rotate(0deg)');}
@@ -889,6 +894,13 @@ $(() => {
             if (trpc === 1 || trpc === undefined){$('#rpcSession').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Session Stats');}
             else if (trpc === 2){$('#rpcOverall').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Overall stats');}
             else if (trpc === 0){$('#rpcNo').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Hide Stats');}
+            if (goodkey) {
+                $('#api_key').css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 6px white', 'color': 'transparent'} );
+                $('#api_key').val(key);
+            } else {
+                $('#api_key').css( {'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' } );
+                $('#api_key').val('');
+            }
         }
         else{
             $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#settingsdiv').css('display', 'none'); $('#indexdiv').css('display', 'block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none');
@@ -1088,6 +1100,17 @@ $(() => {
     $('#rpcbtn').on('click', () => {
         config.set('settings.rpc', $('#rpcbtn').prop('checked'));
         setRPC();
+    });
+    $('#api_key').on('click', function() {
+        if (goodkey && $(this).val().length === 36) {
+            clipboard.writeText(key);
+            return ModalWindow.open({ title: 'API Key Copied to Clipboard' });
+        }
+        let copied = clipboard.readText();
+        if (copied) copied = copied.replace(/\s/g, '');
+        if (copied.length !== 36) return ModalWindow.open({ title: 'Invalid API key', content: 'Make sure you have copied the correct Hypixel API key! Generate a new one using command "<b>/api new</b>" on Hypixel.', type: -1 });
+        key = copied;
+        verifyKey($(this));
     });
     $('#changeclient').on('click', () => {
         config.delete('players'); config.set('settings.pos', currentWindow.getPosition()); config.set('settings.size', [currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, currentWindow.webContents.getOwnerBrowserWindow().getBounds().height]);

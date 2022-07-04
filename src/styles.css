@@ -673,6 +673,18 @@ input:checked + .slider:before{
     left: 5px;
     transform: rotate(45deg);
 }
+#api_key {
+    font-family: "Minecraftia";
+    color: white;
+    border: 2px solid #8f0000;
+    background: rgba(82, 82, 82, 0.582);
+    text-align: center;
+}
+#api_key:hover {
+    text-shadow: none !important;
+    color: white !important;
+    cursor: copy;
+}
 
 #startmusic{
     min-width: 300px;
@@ -889,7 +901,7 @@ input:checked + .slider:before{
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    z-index: 2;
+    z-index: 10;
 }
 .modal_window {
     max-width: 50%;
