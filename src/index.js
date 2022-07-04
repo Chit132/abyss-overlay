@@ -344,7 +344,6 @@ function playerAJAX(uuid, ign, e, guild = ''){
 
 function addPlayer(ign = '', e = 0){
     let uuid = '';
-    ign = ign.replace(/(§|�)([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
     console.log(`Adding player: ${ign}`);
     $.ajax({type: 'GET', async: true, url: mojang+ign, success: (data, status) => {
         if (status === 'success'){
@@ -558,7 +557,7 @@ function main(event){
     currentWindow = remote.BrowserWindow.getAllWindows(); currentWindow = currentWindow[0];
     $('.clientbutton').css('display', 'none'); $('.startup').css('display', 'none'); $('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block'); $('.tabsbuttons').css('display', 'inline-block'); $('#show').css('display', 'inline-block');
 
-    if (event.data.client === 'lunar'){logpath = config.get('lunarlog', `${homedir}/.lunarclient/offline/1.8/logs/latest.log`); $('#clientimg').attr('src', 'https://img.icons8.com/nolan/2x/lunar-client.png'); $('#clientimg').css({'height': '34px', 'top': '0px'});}
+    if (event.data.client === 'lunar'){logpath = config.get('lunarlog', `${homedir}/.lunarclient/logs/launcher/renderer.log`); $('#clientimg').attr('src', 'https://img.icons8.com/nolan/2x/lunar-client.png'); $('#clientimg').css({'height': '34px', 'top': '0px'});}
     else if (process.platform === 'darwin'){
         if (event.data.client === 'badlion'){logpath = config.get('badlionlog', `${homedir}/Library/Application Support/minecraft/logs/blclient/minecraft/latest.log`); $('#clientimg').attr('src', 'https://www.badlion.net/static/assets/images/logos/badlion-logo.png');}
         else if (event.data.client === 'vanilla'){logpath = config.get('vanillalog', `${homedir}/Library/Application Support/minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706');}
@@ -586,6 +585,7 @@ function main(event){
         const k = data.indexOf('[CHAT]');
         if (k !== -1){
             const msg = data.substring(k+7);
+            msg.replace(/(§|�)([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
             //con.log(msg);
             let changed = false;
             if (msg.indexOf('ONLINE:') !== -1 && msg.indexOf(',') !== -1){
