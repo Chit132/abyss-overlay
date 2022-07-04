@@ -673,6 +673,18 @@ input:checked + .slider:before{
     left: 5px;
     transform: rotate(45deg);
 }
+#api_key {
+    font-family: "Minecraftia";
+    color: white;
+    border: 2px solid #8f0000;
+    background: rgba(82, 82, 82, 0.582);
+    text-align: center;
+}
+#api_key:hover {
+    text-shadow: none !important;
+    color: white !important;
+    cursor: copy;
+}
 
 #startmusic{
     min-width: 300px;
@@ -876,4 +888,67 @@ input:checked + .slider:before{
 #changelogClose:hover{
     cursor: pointer;
     text-shadow: 2px 2px black;
+}
+
+.modal_overlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+}
+.modal_window {
+    max-width: 50%;
+    min-width: 200px;
+    background: rgb(175, 175, 175);
+    font-size: 16px;
+    font-family: "Minecraftia";
+    box-shadow: 0 0 10px 10px rgba(0, 0, 0, 0.25);
+    border-radius: 5px;
+    overflow-y: hidden;
+    pointer-events: all;
+    animation: popout 0.2s linear;
+}
+.modal_titlebar {
+    height: 30px;
+    background: #e9e9e9;
+    display: flex;
+    align-items: center;
+}
+.modal_icon {
+    color: rgb(77, 77, 77);
+    margin: auto 3px;
+}
+.modal_title {
+    color: rgb(77, 77, 77);
+    font-weight: bold;
+    position: relative;
+    left: 0;
+}
+.modal_close {
+    font-size: 28px !important;
+    margin-left: auto;
+    color: rgb(27, 27, 27);
+    text-shadow: none;
+    cursor: pointer;
+}
+.modal_close:hover {
+    color: rgb(54, 54, 54);
+}
+.modal_content {
+    margin: 0;
+    padding: 5px;
+    border-top: 1px solid black;
+}
+
+@keyframes popout {
+    from { transform: scale(0) }
+    80% { transform: scale(1.1) }
+    to { transform: scale(1) }
 }

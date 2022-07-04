@@ -1,6 +1,5 @@
-const { shell, remote, ipcRenderer } = require('electron');
-const { app, BrowserWindow, Notification } = remote;
-const dialog = remote.require('electron').dialog;
+const { shell, remote, ipcRenderer, clipboard } = require('electron');
+const { app, BrowserWindow, Notification, dialog } = remote;
 const fs = require('fs');
 const con = remote.getGlobal('console');
 const homedir = app.getPath('home').replaceAll('\\', '/');
@@ -25,18 +24,22 @@ catch{
     }
 }
 const config = require('electron-json-config');
-const { starColor, nameColor, guildColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL } = require('./helpers.js');
+const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, HypixelColors } = require('./helpers.js');
+const { ModalWindow } = require('./modalWindow.js');
 
 
 config.delete('players');
-const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP;
-var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, mojang = 'https://api.mojang.com/users/profiles/minecraft/', goodkey = true, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
+var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
 
 function updateTags(){
     $.ajax({type: 'GET', async: true, url: `${tagsIP}/gimmeusers`, success: (data) => {
         tagslist = JSON.parse(data);
+        overlayAPIdown = false;
+    }, error: () => {
+        overlayAPIdown = true;
     }});
 }
 updateTags();
@@ -63,10 +66,12 @@ versionCompare().then((uptodate) => {
     }
 });
 
-function verifyKey(){
+function verifyKey($apiElement = false) {
     $.ajax({type: 'GET', async: false, url: 'https://api.hypixel.net/key?key='+key, success: (data) => {
-        if (data.success === true){
-            keygot = true;
+        if (data.success === true) {
+            goodkey = true;
+            apilink = `https://api.hypixel.net/player?key=${key}&uuid=`;
+            config.set('key', key);
             useruuid = data.record.owner.replaceAll('-', '');
             $.ajax({type: 'GET', async: false, url: `https://api.mojang.com/user/profiles/${data.record.owner}/names`, success: (names) => {user = names[names.length-1].name;}});
             $.ajax({type: 'GET', async: false, url: apilink+useruuid, success: (data) => {
@@ -75,16 +80,46 @@ function verifyKey(){
                     starttime = new Date();
                 }
             }});
+            $('#api_key').val(key);
+            if ($apiElement) {
+                ModalWindow.open({ title: 'API Key Accepted!', type: 1 });
+                $apiElement.css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 6px white', 'color': 'transparent'} );
+            }
+        } else goodkey = false;
+    }, error: (jqXHR) => {
+        if (jqXHR.status === 0) apiDown = true;
+        goodkey = false;
+        if ($apiElement) {
+            $apiElement.val('');
+            $apiElement.css({ 'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' });
+            if (jqXHR.status !== 0) ModalWindow.open({ title: 'Invalid API Key', content: 'The entered API key is either invalid or it expired! Generate a new one using command "<b>/api new</b>" on Hypixel.', type: -1 });
         }
+        updateArray();
     }});
+    updateHTML();
 }
-verifyKey();
 
 function updateHTML(){
     let namehtml = '', taghtml = ''; wshtml = '', fkdrhtml = '', wlrhtml = '', bblrhtml = '', finalshtml = '', winshtml = '';
     //con.log('changing 1');
-    if (!goodfile){namehtml += '<li style="color: #FF0000">NO CLIENT PATH FOUND</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">MISSING CLIENT LOGS FILE</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
-    else if (!goodkey){namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">RUN COMMAND "/api new"</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
+    if (!goodfile) {namehtml += '<li style="color: #FF0000">NO CLIENT PATH FOUND</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">MISSING CLIENT LOGS FILE</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
+    else if (apiDown) {
+        ModalWindow.open({
+            title: 'Hypixel API Down',
+            content: 'The Hypixel API is currently unreachable! It may be down or under maintainence. Stats will not show up until the API is back, but the overlay can still show some nicked players',
+            type: -1,
+            class: -2
+        });
+    }
+    else if (!goodkey) {namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">RUN COMMAND "/api new"</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">OR ENTER IT IN SETTINGS</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
+    else if (keyThrottle) {
+        ModalWindow.open({
+            title: 'Hypixel API Key Throttle',
+            content: 'You are looking up too many players too quickly! Hypixel has ratelimited your API key for around 1 minute. Try not to search for too many players too quickly: ~60 players per minute max',
+            type: -1,
+            class: -1
+        });
+    }
     for (let i = 0; i < players.length; i++){
         //con.log(players[i].name);
         let stars = '', starsColor = '#AAAAAA'; avatar = 'https://crafatar.com/avatars/ec561538f3fd461daff5086b22154bce?size=48&default=MHF_Steve&overlay';//tagColor = '#AAAAAA';
@@ -207,6 +242,7 @@ function updateArray(){
 function playerAJAX(uuid, ign, e, guild = ''){
     let api = '', got = false;
     $.ajax({type: 'GET', async: true, url: apilink+uuid, success: (data) => {
+        keyThrottle = false; apiDown = false; ModalWindow.keyThrottle = false; ModalWindow.APIdown = false;
         if (data.success === true && data.player !== null){
             let tswlvl = -1, tdwins = -1;
             if (data.player.displayname === ign){
@@ -291,22 +327,23 @@ function playerAJAX(uuid, ign, e, guild = ''){
                     let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;">${level} ${nameColor(api)}${guild}</li>`;
                     players.push({name: ign, api: api, dwins: tdwins, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
                 }
-                updateArray();
             }
-            else{got = true; players.push({name: ign, namehtml: ign, api: null}); updateArray();}
+            else{got = true; players.push({name: ign, namehtml: ign, api: null});}
+            updateArray();
         }
         else if (api.player == null){got = true; players.push({name: ign, namehtml: ign, api: null}); updateArray();}
     }, error: (jqXHR) => {
         got = false;
-        if (jqXHR.responseJSON.cause.indexOf('API key') !== -1) goodkey = false;
-        else players.push({name: ign, namehtml: ign, api: null});
+        if (jqXHR.status === 0) apiDown = true; 
+        else if (jqXHR.status === 403) goodkey = false;
+        else if (jqXHR.status === 429) keyThrottle = true;
+        else {apiDown = true; players.push({name: ign, namehtml: ign, api: null})};
         updateArray();
     }});
 }
 
-function addPlayer(ign, e = 0){
+function addPlayer(ign = '', e = 0){
     let uuid = '';
-    ign = ign.replace(/§([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
     console.log(`Adding player: ${ign}`);
     $.ajax({type: 'GET', async: true, url: mojang+ign, success: (data, status) => {
         if (status === 'success'){
@@ -317,7 +354,7 @@ function addPlayer(ign, e = 0){
                     if (data.success === true && data.guild){
                         $.ajax({type: 'GET', async: true, url: `https://api.hypixel.net/guild?key=${key}&id=${data.guild}`, success: (data) => {
                             if (data.success === true && data.guild){
-                                if (data.guild.tag) guild = ` <span style="color: ${guildColor(data.guild.tagColor)}">[${data.guild.tag}]</span>`;
+                                if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
                             }
                             playerAJAX(uuid, ign, e, guild);
                         }, error: () => {
@@ -520,7 +557,7 @@ function main(event){
     currentWindow = remote.BrowserWindow.getAllWindows(); currentWindow = currentWindow[0];
     $('.clientbutton').css('display', 'none'); $('.startup').css('display', 'none'); $('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block'); $('.tabsbuttons').css('display', 'inline-block'); $('#show').css('display', 'inline-block');
 
-    if (event.data.client === 'lunar'){logpath = config.get('lunarlog', `${homedir}/.lunarclient/offline/1.8/logs/latest.log`); $('#clientimg').attr('src', 'https://img.icons8.com/nolan/2x/lunar-client.png'); $('#clientimg').css({'height': '34px', 'top': '0px'});}
+    if (event.data.client === 'lunar'){logpath = config.get('lunarlog', `${homedir}/.lunarclient/logs/launcher/renderer.log`); $('#clientimg').attr('src', 'https://img.icons8.com/nolan/2x/lunar-client.png'); $('#clientimg').css({'height': '34px', 'top': '0px'});}
     else if (process.platform === 'darwin'){
         if (event.data.client === 'badlion'){logpath = config.get('badlionlog', `${homedir}/Library/Application Support/minecraft/logs/blclient/minecraft/latest.log`); $('#clientimg').attr('src', 'https://www.badlion.net/static/assets/images/logos/badlion-logo.png');}
         else if (event.data.client === 'vanilla'){logpath = config.get('vanillalog', `${homedir}/Library/Application Support/minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706');}
@@ -541,21 +578,14 @@ function main(event){
     if (fs.existsSync(logpath)) filegot = true;
     if (!filegot) goodfile = false;
 
-    let keygot = false;
-    $.ajax({type: 'GET', async: false, url: 'https://api.hypixel.net/key?key='+key, success: (data) => {
-        if (data.success === true){
-            keygot = true;
-            $.ajax({type: 'GET', async: false, url: `https://api.mojang.com/user/profiles/${data.record.owner}/names`, success: (names) => {user = names[names.length-1].name;}});
-        }
-    }});
-    if (!keygot) goodkey = false;
-    updateHTML();
+    verifyKey();
 
     const tail = new Tail(logpath, {/*logger: con, */useWatchFile: true, nLines: 1, fsWatchOptions: {interval: 100}});
     tail.on('line', (data) => {
         const k = data.indexOf('[CHAT]');
         if (k !== -1){
             const msg = data.substring(k+7);
+            msg.replace(/(§|�)([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
             //con.log(msg);
             let changed = false;
             if (msg.indexOf('ONLINE:') !== -1 && msg.indexOf(',') !== -1){
@@ -684,7 +714,7 @@ function main(event){
             }
             else if ((msg.indexOf('reconnected') !== -1) && msg.indexOf(':') === -1) sent = false;
             else if (msg.indexOf('The game starts in 1 second!') !== -1 && msg.indexOf(':') === -1){if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, Math.round(zoom*35), true); $('#show').css('transform', 'rotate(90deg)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none');} gameStartNotif();}
-            else if (msg.indexOf('new API key') !== -1 && msg.indexOf(':') === -1){key = msg.substring(msg.indexOf('is ')+3); config.set('key', key); apilink = `https://api.hypixel.net/player?key=${key}&uuid=`; goodkey = true; verifyKey(); updateHTML();}
+            else if (msg.indexOf('new API key') !== -1 && msg.indexOf(':') === -1){key = msg.substring(msg.indexOf('is ')+3); config.set('key', key); apilink = `https://api.hypixel.net/player?key=${key}&uuid=`; goodkey = true; verifyKey($('#api_key')); updateHTML();}
             else if (msg.indexOf('Guild Name: ') === 0 && inlobby){
                 guildlist = true; guildtag = false;
                 if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, winheight, true); $('#show').css('transform', 'rotate(0deg)');}
@@ -793,6 +823,16 @@ function main(event){
 }
 
 $(() => {
+    ModalWindow.initialize();
+    if (overlayAPIdown) {
+        ModalWindow.open({
+            title: 'Abyss Overlay API Down',
+            content: 'The Abyss Overlay API is currently unreachable! It is likely under maintainence and will be back up soon. Tags and/or music might not function properly right now',
+            type: -2,
+            class: -3
+        });
+    }
+
     if (config.get('settings.client', -1) !== -1){
         let tevent = {data: {client: config.get('settings.client')}};
         main(tevent);
@@ -854,6 +894,13 @@ $(() => {
             if (trpc === 1 || trpc === undefined){$('#rpcSession').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Session Stats');}
             else if (trpc === 2){$('#rpcOverall').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Overall stats');}
             else if (trpc === 0){$('#rpcNo').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Hide Stats');}
+            if (goodkey) {
+                $('#api_key').css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 6px white', 'color': 'transparent'} );
+                $('#api_key').val(key);
+            } else {
+                $('#api_key').css( {'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' } );
+                $('#api_key').val('');
+            }
         }
         else{
             $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#settingsdiv').css('display', 'none'); $('#indexdiv').css('display', 'block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none');
@@ -913,14 +960,30 @@ $(() => {
     //     $('#tag').html(thtml); $('#ign').html(tnhtml); $('#ws').html(twhtml);
     // });
 
-    // $('#ppp').on('click', () => {
-    //     let temp = $('#test').css('height');
-    //     con.log(temp);
-    // });
-
     ipcRenderer.on('test', (event, ...arg) => {
         console.log('test');
-        ipcRenderer.send('autowho');
+        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
+        for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
+
+        //ipcRenderer.send('autowho');
+
+        $.ajax({type: 'GET', async: true, url: `http://tags.abyssoverlay.com:26598/gimmeusers`, success: (data) => {
+            console.log('success');
+            apiDown = false; keyThrottle = false;
+        }, error: (jqXHR) => {
+            console.log(jqXHR);
+            if (jqXHR.status === 0) apiDown = true; 
+            else if (jqXHR.status === 403) goodkey = false;
+            else if (jqXHR.status === 429) keyThrottle = true;
+            else players.push({name: ign, namehtml: ign, api: null});
+            updateArray();
+        }});
+
+        ModalWindow.open({
+            title: 'Hello modal window',
+            content: 'Please tell me this modal window actually worked dude. I tried something new with JS and am hoping this works first try', // optional
+            type: 1 // 1 for success, -1 for error, -2 for warning, leave blank for general info
+        });
     });
 
 
@@ -971,7 +1034,11 @@ $(() => {
         gamemode = 1; config.set('settings.gamemode', 1); let tplayers = players; players = []; updateArray(); for (let i = 0, len = tplayers.length; i < len; i++){addPlayer(tplayers[i].name);}
     });
     $('#duels').on('click', () => {
-        dialog.showMessageBox(currentWindow, {title: 'PLEASE READ', detail: 'Hypixel has PATCHED any legitimate form of being able to check the stats of your opponents in any duels gamemode! Therefore, to keep the overlay legal and prevent the user from getting banned, you will no longer be able to see the stats of your opponents in a duels lobby. However, you can still use this feature to check opponents\'s duels stats in any other gamemode. Thanks <3\n\nTL;DR: you cannot see the stats of your opponents in duels to abide by the rules, but you can still see duels stats in other gamemodes.', type: 'warning'});
+        ModalWindow.open({
+            title: 'IMPORTANT Duels Update',
+            content: "Hypixel has PATCHED any legitimate form of being able to check the stats of your opponents in any duels gamemode! Therefore, to keep the overlay legal and prevent the you from getting banned, you will no longer be able to see the stats of your opponents in a duels lobby. However, you can still use this feature to check opponents's duels stats in any other gamemode. Thanks <3<br>TL;DR: you cannot see the stats of your opponents in duels to abide by the rules, but you can still see duels stats in other gamemodes.",
+            type: -2
+        });
         $('#gamemodebtn').find('.custom-select').find('.custom-options').find('.custom-option').removeClass('selected'); $('#duels').addClass('selected'); $('#gamemodebtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Duels');
         $('#ws_nwl').html('WS'); $('#kdr').html('KDR'); $('#kills').html('KILLS');
         gamemode = 2; config.set('settings.gamemode', 2); let tplayers = players; players = []; updateArray(); for (let i = 0, len = tplayers.length; i < len; i++){addPlayer(tplayers[i].name);}
@@ -1033,6 +1100,17 @@ $(() => {
     $('#rpcbtn').on('click', () => {
         config.set('settings.rpc', $('#rpcbtn').prop('checked'));
         setRPC();
+    });
+    $('#api_key').on('click', function() {
+        if (goodkey && $(this).val().length === 36) {
+            clipboard.writeText(key);
+            return ModalWindow.open({ title: 'API Key Copied to Clipboard' });
+        }
+        let copied = clipboard.readText();
+        if (copied) copied = copied.replace(/\s/g, '');
+        if (copied.length !== 36) return ModalWindow.open({ title: 'Invalid API key', content: 'Make sure you have copied the correct Hypixel API key! Generate a new one using command "<b>/api new</b>" on Hypixel.', type: -1 });
+        key = copied;
+        verifyKey($(this));
     });
     $('#changeclient').on('click', () => {
         config.delete('players'); config.set('settings.pos', currentWindow.getPosition()); config.set('settings.size', [currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, currentWindow.webContents.getOwnerBrowserWindow().getBounds().height]);
@@ -1239,7 +1317,7 @@ $(() => {
         $.ajax({type: 'GET', async: true, dataType: 'json', url: `${musicIP}/requestMusicSession?uuid=${useruuid}`, success: (data) => {
             if (data.success === true){
                 $('.musicintro').css('display', 'none'); $('.musicplaying').css('display', 'block'); $('.musicbutton').css('display', 'inline-block');
-                dialog.showMessageBox(currentWindow, {title: 'Music Session Created!', detail: 'Check your ping in the Abyss Overlay Discord server to continue <3'});
+                ModalWindow.open({ title: 'Music Session Created', content: 'Check your ping in the Abyss Overlay Discord server to continue <3', type: 1 });
                 music.session = true;
                 music.updatetimer = setInterval(updateMusic, 5000);
             }
