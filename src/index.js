@@ -845,7 +845,8 @@ $(() => {
     currentWindow = remote.BrowserWindow.getAllWindows(); currentWindow = currentWindow[0];
     let winPos = config.get('settings.pos', [0, 0]); let winSize = config.get('settings.size', [800, 600]);
     if (winSize[1] < 315) winSize[1] = 315;
-    currentWindow.setPosition(winPos[0], winPos[1]); currentWindow.setSize(winSize[0], winSize[1]);
+    //currentWindow.setPosition(winPos[0], winPos[1]);
+    currentWindow.setSize(winSize[0], winSize[1]);
     currentWindow.on('resized', () => {
         let newheight = currentWindow.webContents.getOwnerBrowserWindow().getBounds().height;
         if (newheight > 65) winheight = newheight;
