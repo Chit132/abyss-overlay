@@ -536,7 +536,7 @@ function updateMusic(){
             clearMusic(0, true);
         }
     }, error: () => {
-        clearMusic(1, -1);
+        clearMusic(1, -1);main
         console.log('API ERROR with getMusicSession'); $('#startmusic').css('display', 'none'); dialog.showMessageBox(currentWindow, {title: 'API ERROR!', detail: 'Music API could be down for the moment :( Contact the devs in the Abyss Overlay Discord server please!', type: 'error'});
     }});
 }
@@ -576,7 +576,10 @@ function main(event){
 
     let filegot = false;
     if (fs.existsSync(logpath)) filegot = true;
-    if (!filegot) goodfile = false;
+    if (!filegot) {
+        goodfile = false;
+        return ModalWindow.open({ title: 'Client chat logs file not found', content: 'The chat logs file for your selected client was not found! You can set it manually if you know where it is using the "Select log file" button in settings. Overlay will not work unless the correct chat logs file is found.', type: -1 })
+    }
 
     verifyKey();
 
