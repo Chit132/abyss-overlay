@@ -603,8 +603,7 @@ function main(event){
     tail.on('line', (data) => {
         const k = data.indexOf('[CHAT]');
         if (k !== -1){
-            const msg = data.substring(k+7);
-            msg.replace(/(§|�)([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
+            const msg = data.substring(k+7).replace(/(§|�)([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
             //con.log(msg);
             let changed = false;
             if (msg.indexOf('ONLINE:') !== -1 && msg.indexOf(',') !== -1){
