@@ -561,17 +561,15 @@ function main(event){
         $('#clientimg').attr('src', 'https://img.icons8.com/nolan/2x/lunar-client.png'); $('#clientimg').css({'height': '34px', 'top': '0px'});
         logpath = config.get('lunarlog', -1);
         if (logpath === -1) {
-            let log_18 = { path: `${homedir}/.lunarclient/offline/1.8/logs/latest.log`, exists: false };
-            let log_189 = { path: `${homedir}/.lunarclient/offline/1.8.9/logs/latest.log`, exists: false };
-            log_18.exists = fs.existsSync(log_18.path);
-            log_189.exists = fs.existsSync(log_189.path);
-            if (log_18.exists && log_189.exists) {
-                log_18.modified = fs.statSync(log_18.path).mtime;
-                log_189.modified = fs.statSync(log_189.path).mtime;
-                logpath = log_18.modified > log_189.modified ? log_18.path : log_189.path;
-            }
-            else if (log_18.exists) logpath = log_18.path;
-            else logpath = log_189.path;
+            let log_18 = { path: `${homedir}/.lunarclient/offline/1.8/logs/latest.log`, modified: 0 };
+            let log_189 = { path: `${homedir}/.lunarclient/offline/1.8.9/logs/latest.log`, modified: 0 };
+            let log_multiver = { path: `${homedir}/.lunarclient/offline/multiver/logs/latest.log`, modified: 0 };
+            if (fs.existsSync(log_18.path)) log_18.modified = fs.statSync(log_18.path).mtime;
+            if (fs.existsSync(log_189.path)) log_189.modified = fs.statSync(log_189.path).mtime;
+            if (fs.existsSync(log_multiver.path)) log_multiver.modified = fs.statSync(log_multiver.path).mtime;
+            const modifiedLogs = [ log_18, log_189, log_multiver ];
+            modifiedLogs.sort((a, b) => { return b.modified - a.modified });
+            logpath = modifiedLogs[0].path;
         }
     }
     else if (process.platform === 'darwin'){
@@ -590,9 +588,7 @@ function main(event){
     }
     //con.log(logpath);
 
-    let filegot = false;
-    if (fs.existsSync(logpath)) filegot = true;
-    if (!filegot) {
+    if (!fs.existsSync(logpath)) {
         goodfile = false;
         return ModalWindow.open({ title: 'Client chat logs file not found', content: 'The chat logs file for your selected client was not found! You can set it manually if you know where it is using the "Select log file" button in settings. Overlay will not work unless the correct chat logs file is found.', type: -1 })
     }
