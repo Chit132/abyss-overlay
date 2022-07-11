@@ -38,6 +38,9 @@ body::-webkit-scrollbar{
 ::-webkit-scrollbar-thumb:hover{
     background: #555;
 }
+::-webkit-scrollbar-corner{
+    background-color: transparent;
+}
 p{
     font-size: "100px";
     color: white;
@@ -888,6 +891,31 @@ input:checked + .slider:before{
 #changelogClose:hover{
     cursor: pointer;
     text-shadow: 2px 2px black;
+}
+
+.popup_stats {
+    position: absolute;
+    font-family: "Minecraftia";
+    font-size: 15px;
+    min-width: 250px;
+    max-height: 80%;
+    margin: 0;
+    padding: 10px 15px 10px 10px;
+    left: 48%;
+    top: 50px;
+    color: rgb(145, 145, 145);
+    text-shadow: 2px 2px black;
+    background-color: rgba(31, 31, 31, 0.9);
+    border: 2px solid rgb(192, 192, 192);
+    border-radius: 10px;
+    overflow-y: scroll;
+    z-index: 2;
+}
+
+.popup_stats > p {
+    margin: 0;
+    padding: 0;
+    color: rgb(192, 192, 192);
 }
 
 .modal_overlay {
