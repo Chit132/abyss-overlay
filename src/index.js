@@ -600,7 +600,7 @@ function main(event){
         const k = data.indexOf('[CHAT]');
         if (k !== -1){
             const msg = data.substring(k+7).replace(/(§|�)([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
-            //con.log(msg);
+            //console.log(msg);
             let changed = false;
             if (msg.indexOf('ONLINE:') !== -1 && msg.indexOf(',') !== -1){
                 if (inlobby){players = [];} inlobby = false;
@@ -693,11 +693,11 @@ function main(event){
                     if (left === players[i].name){players.splice(i, 1); changed = true; updateArray();}
                 }
             }
-            else if (config.get('settings.call', true) && inlobby && msg.indexOf(':') !== -1 && msg.substring(msg.indexOf(':')+2).indexOf(user) !== -1 && msg.indexOf('Guild >') === -1 && msg.indexOf('Party >') === -1 && msg.indexOf('To') === -1 && msg.indexOf('From') === -1){
+            else if (config.get('settings.call', true) && inlobby && msg.indexOf(':') !== -1 && msg.substring(msg.indexOf(':')+2).toLowerCase().indexOf(user.toLowerCase()) !== -1 && msg.indexOf('Guild >') === -1 && msg.indexOf('Party >') === -1 && msg.indexOf('To') === -1 && msg.indexOf('From') === -1){
                 let tmsg = msg.substring(0, msg.indexOf(':')+1), tmsgarray = tmsg.split(' ');
                 for (let i = 0; i < tmsgarray.length; i++){
                     if (tmsgarray[i].indexOf(':') !== -1){
-                        tmsgarray[i] = tmsgarray[i].substring(0, tmsgarray[i].length-3);
+                        tmsgarray[i] = tmsgarray[i].substring(0, tmsgarray[i].length-1);
                         if (tmsgarray[i][1] === '7') tmsgarray[i] = tmsgarray[i].substring(2);
                         if (tmsgarray[i] !== user){
                             let contains = false;
