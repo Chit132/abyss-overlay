@@ -695,7 +695,7 @@ function main(event){
                     if (left === players[i].name){players.splice(i, 1); changed = true; updateArray();}
                 }
             }
-            else if (config.get('settings.call', true) && inlobby && msg.indexOf(':') !== -1 && msg.substring(msg.indexOf(':')+2).toLowerCase().indexOf(user.toLowerCase()) !== -1 && msg.indexOf('Guild >') === -1 && msg.indexOf('Party >') === -1 && msg.indexOf('To') === -1 && msg.indexOf('From') === -1){
+            else if (config.get('settings.call', true) && inlobby && msg.indexOf(':') !== -1 && msg.substring(msg.indexOf(':')+2)?.toLowerCase().indexOf(user?.toLowerCase()) !== -1 && msg.indexOf('Guild >') === -1 && msg.indexOf('Party >') === -1 && msg.indexOf('To') === -1 && msg.indexOf('From') === -1){
                 let tmsg = msg.substring(0, msg.indexOf(':')+1), tmsgarray = tmsg.split(' ');
                 for (let i = 0; i < tmsgarray.length; i++){
                     if (tmsgarray[i].indexOf(':') !== -1){
@@ -716,6 +716,7 @@ function main(event){
             else if (msg.indexOf('Can\'t find a') !== -1 && msg.indexOf('\'!') !== -1 && msg.indexOf(':') === -1){
                 let wsearch = msg.substring(37, msg.lastIndexOf("'"));
                 let contains = false;
+                if(!wsearch) { console.log("Could not find player in search", wswearch) }
                 if ((wsearch.toLowerCase() === 'me') || (wsearch.toLowerCase() === "i")) wsearch = user;
                 for (let i = 0; i < players.length; i++){if (wsearch.toLowerCase() === players[i].name.toLowerCase()){contains = true;}}
                 if (!contains){
@@ -755,6 +756,7 @@ function main(event){
                     let i = command.indexOf(' ');
                     if (i === -1) command = [command.substring(1)];
                     else command = [command.substring(1, i), command.substring(i+1)];
+                    if (!command[0]){ console.log("Could not extract ign from command", command[0]); return; }
                     command[0].toLowerCase();
                     
                     if (command[0] === 'play'){
