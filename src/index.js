@@ -74,7 +74,7 @@ function verifyKey($apiElement = false) {
             apilink = `https://api.hypixel.net/player?key=${key}&uuid=`;
             config.set('key', key);
             useruuid = data.record.owner.replaceAll('-', '');
-            $.ajax({type: 'GET', async: false, url: `https://api.mojang.com/user/profiles/${data.record.owner}/names`, success: (names) => {user = names[names.length-1].name;}});
+            $.ajax({type: 'GET', async: false, url: 'https://sessionserver.mojang.com/session/minecraft/profile/' + data.record.owner, success: (profile) => {user = profile.name;}});
             $.ajax({type: 'GET', async: false, url: apilink+useruuid, success: (data) => {
                 if (data.success === true && data.player !== null){
                     startapi = data.player;
