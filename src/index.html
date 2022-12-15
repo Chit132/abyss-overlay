@@ -30,118 +30,135 @@
         </div>
 
         <div id="settingsdiv">
-            <div class="settingspage" style="width: 100%; text-align: left; margin-bottom: 15px; z-index: 2;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Stats gamemode:</p>
-                <div class="custom-select-wrapper settingspage" id="gamemodebtn" style="filter: none;">
-                    <div class="custom-select">
-                        <div class="custom-select_trigger"><span style="text-align: center; width: 85%;">Select</span>
-                            <div class="arrow"></div>
-                        </div>
-                        <div class="custom-options">
-                            <span class="custom-option" id="bw">Bedwars</span>
-                            <span class="custom-option" id="sw">Skywars</span>
-                            <span class="custom-option" id="duels">Duels</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left; margin-bottom: 15px; z-index: 1;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Bedwars stats gamemode:</p>
-                <div class="custom-select-wrapper settingspage" id="gmbtn" style="filter: none;">
-                    <div class="custom-select">
-                        <div class="custom-select_trigger"><span style="text-align: center; width: 85%;">Select</span>
-                            <div class="arrow"></div>
-                        </div>
-                        <div class="custom-options">
-                            <span class="custom-option" id="overall">Overall</span>
-                            <span class="custom-option" id="solos">Solos</span>
-                            <span class="custom-option" id="doubles">Doubles</span>
-                            <span class="custom-option" id="threes">Threes</span>
-                            <span class="custom-option" id="fours">Fours</span>
+            <div class="settings-container">
+                <div class="setting-group" style="z-index: 2;">
+                    <p>Stats Gamemode</p>
+                    <div class="custom-select-wrapper" id="gamemodebtn" style="filter: none;">
+                        <div class="custom-select">
+                            <div class="custom-select_trigger"><span style="text-align: center; width: 85%;">Select</span>
+                                <div class="arrow"></div>
+                            </div>
+                            <div class="custom-options">
+                                <span class="custom-option" id="bw">Bedwars</span>
+                                <span class="custom-option" id="sw">Skywars</span>
+                                <span class="custom-option" id="duels">Duels</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Autowho [BETA] (AYOR):</p>
-                <label class="switch settingspage" style="margin: 10px; filter: none;">
-                    <input class="settingspage" type="checkbox" id="whobtn">
-                    <span class="slider round settingspage" style="margin: 0px; filter: none;"></span>
-                </label>
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Game start notifs:</p>
-                <label class="switch settingspage" style="margin: 10px; filter: none;">
-                    <input class="settingspage" type="checkbox" id="notifsbtn" checked>
-                    <span class="slider round settingspage" style="margin: 0px; filter: none;"></span>
-                </label>
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Auto shrink/unshrink:</p>
-                <label class="switch settingspage" style="margin: 10px; filter: none;">
-                    <input class="settingspage" type="checkbox" id="shrinkbtn" checked>
-                    <span class="slider round settingspage" style="margin: 0px; filter: none;"></span>
-                </label>
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Show guild tags (a little slower):</p>
-                <label class="switch settingspage" style="margin: 10px; filter: none;">
-                    <input class="settingspage" type="checkbox" id="gtagbtn" checked>
-                    <span class="slider round settingspage" style="margin: 0px; filter: none;"></span>
-                </label>
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Players that say your IGN/send p and f reqs:</p>
-                <label class="switch settingspage" style="margin: 10px; filter: none;">
-                    <input class="settingspage" type="checkbox" id="callbtn" checked>
-                    <span class="slider round settingspage" style="margin: 0px; filter: none;"></span>
-                </label>
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Discord Rich Presence (start overlay before MC):</p>
-                <label class="switch settingspage" style="margin: 10px; filter: none;">
-                    <input class="settingspage" type="checkbox" id="rpcbtn" checked>
-                    <span class="slider round settingspage" style="margin: 0px; filter: none;"></span>
-                </label>
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left; margin-bottom: 15px; z-index: 1;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">&nbsp ➤Discord Rich Presence stats:</p>
-                <div class="custom-select-wrapper settingspage" id="rpcStats" style="filter: none; width: 40%;">
-                    <div class="custom-select">
-                        <div class="custom-select_trigger"><span style="text-align: center; width: 85%;">Select</span>
-                            <div class="arrow"></div>
-                        </div>
-                        <div class="custom-options">
-                            <span class="custom-option" id="rpcSession">Session Stats</span>
-                            <span class="custom-option" id="rpcOverall">Overall Stats</span>
-                            <span class="custom-option" id="rpcNo">Hide Stats</span>
+                <div class="setting-group" style="z-index: 1;">
+                    <p>Bedwars Stats Gamemode</p>
+                    <div class="custom-select-wrapper" id="gmbtn" style="filter: none;">
+                        <div class="custom-select">
+                            <div class="custom-select_trigger"><span style="text-align: center; width: 85%;">Select</span>
+                                <div class="arrow"></div>
+                            </div>
+                            <div class="custom-options">
+                                <span class="custom-option" id="overall">Overall</span>
+                                <span class="custom-option" id="solos">Solos</span>
+                                <span class="custom-option" id="doubles">Doubles</span>
+                                <span class="custom-option" id="threes">Threes</span>
+                                <span class="custom-option" id="fours">Fours</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left; margin-bottom: 15px;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Hypixel API Key:</p>
-                <input type="text" id="api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">
-            </div>
-            <div class="settingspage" style="width: 100%; text-align: left;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Change client (will restart overlay):</p>
-                <div class="custom-select-wrapper settingspage" id="changeclient" style="filter: none;">
-                    <div class="custom-select" style="width: 250px;">
-                        <div class="custom-select_trigger" style="text-align: center;">&nbspChange client</div>
+                <div class="setting-group">
+                    <p>Autowho [BETA]</p>
+                    <label class="switch">
+                        <input type="checkbox" id="whobtn">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Overlay will automatically type /who in chat for you. After joining a lobby, wait a couple of seconds before touching your keyboard to avoid interfering with autowho. [AYOR]</span>
+                </div>
+                <div class="setting-group">
+                    <p>Game Start Notifications</p>
+                    <label class="switch">
+                        <input class="settingspage" type="checkbox" id="notifsbtn" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Receive a notification when the game starts. Feel free to tab out during the lobby without having to worry about when the game will start!</span>
+                </div>
+                <div class="setting-group">
+                    <p>Auto Shrink/Unshrink</p>
+                    <label class="switch">
+                        <input class="settingspage" type="checkbox" id="shrinkbtn" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Overlay will automatically switch between its shrinked and full display modes during key events so you don't miss out on any important stats changes while focusing on your game! It will shrink when your game begins and it will open back up when a player is added.</span>
+                </div>
+                <div class="setting-group">
+                    <p>Guild Tags</p>
+                    <label class="switch">
+                        <input class="settingspage" type="checkbox" id="gtagbtn" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Show guild tags next to player names. Makes 1 more Hypixel API call per player.</span>
+                </div>
+                <div class="setting-group">
+                    <p>External Players</p>
+                    <label class="switch">
+                        <input class="settingspage" type="checkbox" id="callbtn" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Show the stats of players who type your name in chat; these players will show up with the CALL tag. Helpful for finding parties in lobbies. Also show players who send you party and friend requests.</span>
+                </div>
+                <div class="setting-group">
+                    <p>Discord Rich Presence</p>
+                    <label class="switch">
+                        <input class="settingspage" type="checkbox" id="rpcbtn" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Show off your overlay and stats in your Discord status!</span>
+                </div>
+                <div class="setting-group" style="z-index: 2;">
+                    <p>Discord RPC Stats</p>
+                    <div class="custom-select-wrapper" id="rpcStats" style="width: 45%">
+                        <div class="custom-select">
+                            <div class="custom-select_trigger"><span style="text-align: center; width: 85%;">Select</span>
+                                <div class="arrow"></div>
+                            </div>
+                            <div class="custom-options">
+                                <span class="custom-option" id="rpcSession">Session Stats</span>
+                                <span class="custom-option" id="rpcOverall">Overall Stats</span>
+                                <span class="custom-option" id="rpcNo">Hide Stats</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span>Choose what stats to show off in your Discord status.</span>
+                </div>
+                <div class="setting-group">
+                    <p>Hypixel API Key</p>
+                    <input type="text" id="api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key" style="position: absolute; top: 4px; right: 3px;">
+                </div>
+                <div class="setting-group">
+                    <p>Change Client</p>
+                    <div class="custom-select-wrapper" id="changeclient" style="width: 240px">
+                        <div class="custom-select">
+                            <div class="custom-select_trigger" style="text-align: center;">Select Client</div>
+                        </div>
+                    </div>
+                    <span>Change your Minecraft client that the overlay detects.<br>WILL RESTART OVERLAY!</span>
+                </div>
+                <div class="setting-group">
+                    <p>Custom Chat Log File</p>
+                    <div class="custom-select-wrapper" id="changelogpath" style="width: 260px">
+                        <div class="custom-select">
+                            <div class="custom-select_trigger" style="text-align: center;">Select Log File</div>
+                        </div>
+                    </div>
+                    <span>Change client's chat log file path. Select the correct latest.log file that your client writes its chat logs to.<br>WILL RESTART OVERLAY!</span>
+                </div>
+                <div class="setting-group">
+                    <p>Overlay Theme</p>
+                    <div style="position: absolute; top: 1px; right: 1px; width: 200px;">
+                        <div style="overflow: visible; height: 35px; width: 30px; z-index: 1;">
+                            <div id="color-picker"></div>
+                        </div>
+                        <button name="Revert" id="revertcolor"></button>
                     </div>
                 </div>
             </div>
-            <div class="settingspage" style="width: 100%; text-align: left; margin-top: 20px;">
-                <p class="settingspage" style="margin-left: 2px; color: var(--primaryColor); filter: none;">➤Custom latest.log path (will restart overlay):</p>
-                <div class="custom-select-wrapper settingspage" id="changelogpath" style="filter: none;">
-                    <div class="custom-select" style="width: 230px;">
-                        <div class="custom-select_trigger" style="text-align: center;">Select log file</div>
-                    </div>
-                </div>
-            </div>
-            <p class="settingspage" style="vertical-align: top; margin-left: 2px; margin-top: 15px; color: var(--primaryColor);">➤Color/Opacity:</p>
-            <div class="settingspage" style="overflow: visible; margin-top: 8px; margin-left: 15px; height: 35px; width: 30px; z-index: 1;"><div id="color-picker"></div></div>
-            <button name="Revert" class="revert settingspage" id="revertcolor"></button>
         </div>
 
         <div id="infodiv">
@@ -253,6 +270,7 @@
             <p id="changelogClose">×</p>
             <p style="height: calc(100% - 37px); margin: 0; margin-left: 5px; padding: 0; overflow-y: auto; color: rgb(179, 179, 179);">
                 - <b>Added popup stats.</b> Hover over a player's name to see more detailed stats<br><br>
+                - <b>Revamped settings page.</b> Settings page is prettier compared to the mess it was before<br><br>
                 - <b>Fixed CALL IGN.</b> Fixed the issue where people who type your name in chat would tend to not show up on the overlay with the CALL tag<br><br>
                 - <b>Fixed error on startup during API key verification.</b> Fixed the issue where an error would be thrown on startup due to user being null. Issue was the result of Mojang API removing their UUID->names endpoint<br><br>
                 - <b>Fixed case-sensitive IGNs</b> IGNs in chat no longer have to be case sensitive
