@@ -1,4 +1,4 @@
-# <img src="https://user-images.githubusercontent.com/61895718/111565782-5ced2900-8772-11eb-9c43-c8801fc2a1a8.png" width="32px"> 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟱.𝟬
+# <img src="https://user-images.githubusercontent.com/61895718/111565782-5ced2900-8772-11eb-9c43-c8801fc2a1a8.png" width="32px"> 𝗔𝗯𝘆𝘀𝘀 𝗢𝘃𝗲𝗿𝗹𝗮𝘆 𝘃𝟭.𝟳.𝟬
 
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/Chit132/abyss-overlay) ![GitHub all releases](https://img.shields.io/github/downloads/Chit132/abyss-overlay/total) [![Discord](https://img.shields.io/discord/822639649247592528?color=7289DA&label=Discord)](https://discord.gg/abyssoverlay)
 
@@ -30,6 +30,7 @@
 - Uses stats to anticipate potential snipers and alts
 - Color-coded stats in terms of skill level
 - Shows player skins next to their names
+- Hover over player names to see detailed stats
 ### Commands
 - Tells you when you need to run command `/who`
 - You can use the command `/w ![username]` in game to check a person's stats.
@@ -73,7 +74,6 @@
 ## Known bugs
 
 - [ ] Does not work in fullscreen
-- [ ] Buttons don't work on occasion
 
 ## Discord
 

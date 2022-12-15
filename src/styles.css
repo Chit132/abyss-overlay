@@ -38,6 +38,9 @@ body::-webkit-scrollbar{
 ::-webkit-scrollbar-thumb:hover{
     background: #555;
 }
+::-webkit-scrollbar-corner{
+    background-color: transparent;
+}
 p{
     font-size: "100px";
     color: white;
@@ -465,37 +468,30 @@ li{
     position: relative;
 }
 .greengradient{
-    background: -webkit-linear-gradient(rgb(0, 180, 96), rgb(255, 255, 255));
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: rgb(0, 180, 96);
 }
 .redgradient{
-    background: -webkit-linear-gradient(rgb(180, 0, 0), rgb(255, 255, 255));
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: rgb(180, 0, 0);
 }
 .yellowgradient{
-    background: -webkit-linear-gradient(rgb(179, 131, 0), rgb(255, 255, 255));
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: goldenrod;
 }
-.revert{
+#revertcolor{
     background: transparent;
     background-image: url("../assets/revert1.png");
     background-size: cover;
     display: inline-block;
+    position: absolute;
+    top: 2px;
+    right: 2px;
     height: 35px;
     width: 35px;
-    margin: 15px;
-    margin-left: 10px;
+    margin: 0;
     vertical-align: top;
     border: none;
     outline: none;
 }
-.revert:hover{
+#revertcolor:hover{
     background-image: url("../assets/revert2.png");
     background-size: cover;
     height: 35px;
@@ -518,12 +514,45 @@ li{
     90%{color: DodgerBlue;}
     100%{color: orange;}
 }
+
+.settings-container {
+    font-family: "Minecraftia";
+    width: 90%;
+    margin: auto;
+}
+.setting-group {
+    position: relative;
+    margin: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 10px;
+    text-align: left;
+}
+.setting-group > p {
+    margin: 5px;
+    height: 36px;
+    line-height: 36px;
+    font-weight: bolder;
+    font-size: 20px;
+    color: var(--primaryColor);
+    filter: drop-shadow(2px 2px black);
+}
+.setting-group > span {
+    display: block;
+    margin: 0;
+    padding: 5px;
+    white-space: pre-wrap;
+    font-size: 14px;
+    color: gainsboro;
+    filter: drop-shadow(2px 2px black);
+}
+
 /*swtich*/
 .switch{
-    position: relative;
-    display: inline-block;
+    position: absolute;
     width: 60px;
     height: 30px;
+    top: 3px;
+    right: 3px;
 }
 .switch input{ 
     opacity: 0;
@@ -533,12 +562,14 @@ li{
 .slider{
     position: absolute;
     cursor: pointer;
+    margin: 0;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
     background-color: #ccc;
     transition: transform .4s;
+    filter: none;
 }
 .slider:before{
     position: absolute;
@@ -568,6 +599,8 @@ input:checked + .slider:before{
 }
 .custom-select-wrapper{
     position: absolute;
+    top: 1px;
+    right: 3px;
     user-select: none;
     width: 30%;
     margin-left: 10px;
@@ -890,6 +923,32 @@ input:checked + .slider:before{
     text-shadow: 2px 2px black;
 }
 
+.popup_stats {
+    position: absolute;
+    font-family: "Minecraftia";
+    font-size: 15px;
+    min-width: 250px;
+    max-height: 80%;
+    margin: 0;
+    padding: 10px 15px 10px 10px;
+    left: 48%;
+    top: 50px;
+    color: rgb(145, 145, 145);
+    text-shadow: 2px 2px black;
+    background-color: rgba(31, 31, 31, 0.9);
+    border: 2px solid rgb(192, 192, 192);
+    border-radius: 10px;
+    overflow-y: scroll;
+    z-index: 2;
+    animation: fade-in 0.2s linear;
+}
+
+.popup_stats > p {
+    margin: 0;
+    padding: 0;
+    color: rgb(192, 192, 192);
+}
+
 .modal_overlay {
     position: fixed;
     width: 100%;
@@ -951,4 +1010,9 @@ input:checked + .slider:before{
     from { transform: scale(0) }
     80% { transform: scale(1.1) }
     to { transform: scale(1) }
+}
+
+@keyframes fade-in {
+    from { opacity: 0 }
+    to { opacity: 1 }
 }

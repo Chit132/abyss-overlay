@@ -26,6 +26,7 @@ catch{
 const config = require('electron-json-config');
 const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, HypixelColors } = require('./helpers.js');
 const { ModalWindow } = require('./modalWindow.js');
+const { PopupStats } = require('./popupStats.js');
 
 
 config.delete('players');
@@ -73,7 +74,7 @@ function verifyKey($apiElement = false) {
             apilink = `https://api.hypixel.net/player?key=${key}&uuid=`;
             config.set('key', key);
             useruuid = data.record.owner.replaceAll('-', '');
-            $.ajax({type: 'GET', async: false, url: `https://api.mojang.com/user/profiles/${data.record.owner}/names`, success: (names) => {user = names[names.length-1].name;}});
+            $.ajax({type: 'GET', async: false, url: 'https://sessionserver.mojang.com/session/minecraft/profile/' + data.record.owner, success: (profile) => {user = profile.name;}});
             $.ajax({type: 'GET', async: false, url: apilink+useruuid, success: (data) => {
                 if (data.success === true && data.player !== null){
                     startapi = data.player;
@@ -156,6 +157,7 @@ function updateHTML(){
         }
     }
     //con.log('changing 2');
+    if (players.length === 0) PopupStats.reset();
     if (numplayers === 0){
         $('#playertitle').html('PLAYERS');
         $('#playertitle').css('color', 'var(--primaryColor)');
@@ -270,7 +272,7 @@ function playerAJAX(uuid, ign, e, guild = ''){
                     else if (e === 4) api.friendReq = true;
                     else if (e === 5) api.guildList = true;
                     ttaghtml = getTag(api, tagslist);
-                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;">${stars} ${nameColor(api)}${guild}</li>`;
+                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${stars} ${nameColor(api)}${guild}</li>`;
                     players.push({name: ign, api: api, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tfkdrhtml, wlrhtml: twlrhtml, finalshtml: tfinalshtml, winshtml: twinshtml});
                 }
                 else if (gamemode === 1){
@@ -299,7 +301,7 @@ function playerAJAX(uuid, ign, e, guild = ''){
                     else if (e === 4) api.friendReq = true;
                     else if (e === 5) api.guildList = true;
                     ttaghtml = getTag(api, tagslist);
-                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;">${level} ${nameColor(api)}${guild}</li>`;
+                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
                     players.push({name: ign, api: api, swlvl: tswlvl, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: tnwlhtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
                 }
                 else if (gamemode === 2){
@@ -324,7 +326,7 @@ function playerAJAX(uuid, ign, e, guild = ''){
                     else if (e === 4) api.friendReq = true;
                     else if (e === 5) api.guildList = true;
                     ttaghtml = getTag(api, tagslist);
-                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;">${level} ${nameColor(api)}${guild}</li>`;
+                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
                     players.push({name: ign, api: api, dwins: tdwins, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
                 }
             }
@@ -600,7 +602,7 @@ function main(event){
         const k = data.indexOf('[CHAT]');
         if (k !== -1){
             const msg = data.substring(k+7).replace(/(§|�)([0-9]|a|b|e|d|f|k|l|m|n|o|r|c)/gm, '');
-            //con.log(msg);
+            //console.log(msg);
             let changed = false;
             if (msg.indexOf('ONLINE:') !== -1 && msg.indexOf(',') !== -1){
                 if (inlobby){players = [];} inlobby = false;
@@ -693,11 +695,11 @@ function main(event){
                     if (left === players[i].name){players.splice(i, 1); changed = true; updateArray();}
                 }
             }
-            else if (config.get('settings.call', true) && inlobby && msg.indexOf(':') !== -1 && msg.substring(msg.indexOf(':')+2).indexOf(user) !== -1 && msg.indexOf('Guild >') === -1 && msg.indexOf('Party >') === -1 && msg.indexOf('To') === -1 && msg.indexOf('From') === -1){
+            else if (config.get('settings.call', true) && inlobby && msg.indexOf(':') !== -1 && msg.substring(msg.indexOf(':')+2).toLowerCase().indexOf(user.toLowerCase()) !== -1 && msg.indexOf('Guild >') === -1 && msg.indexOf('Party >') === -1 && msg.indexOf('To') === -1 && msg.indexOf('From') === -1){
                 let tmsg = msg.substring(0, msg.indexOf(':')+1), tmsgarray = tmsg.split(' ');
                 for (let i = 0; i < tmsgarray.length; i++){
                     if (tmsgarray[i].indexOf(':') !== -1){
-                        tmsgarray[i] = tmsgarray[i].substring(0, tmsgarray[i].length-3);
+                        tmsgarray[i] = tmsgarray[i].substring(0, tmsgarray[i].length-1);
                         if (tmsgarray[i][1] === '7') tmsgarray[i] = tmsgarray[i].substring(2);
                         if (tmsgarray[i] !== user){
                             let contains = false;
@@ -837,7 +839,7 @@ function main(event){
 }
 
 $(() => {
-    ModalWindow.initialize();
+    ModalWindow.initialize(); PopupStats.initialize();
     if (overlayAPIdown) {
         ModalWindow.open({
             title: 'Abyss Overlay API Down',
@@ -977,7 +979,7 @@ $(() => {
 
     ipcRenderer.on('test', (event, ...arg) => {
         console.log('test');
-        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
+        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', 'KidsAreAnnoying', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
         for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
 
         //ipcRenderer.send('autowho');
@@ -994,11 +996,11 @@ $(() => {
             updateArray();
         }});
 
-        ModalWindow.open({
-            title: 'Hello modal window',
-            content: 'Please tell me this modal window actually worked dude. I tried something new with JS and am hoping this works first try', // optional
-            type: 1 // 1 for success, -1 for error, -2 for warning, leave blank for general info
-        });
+        // ModalWindow.open({
+        //     title: 'Hello modal window',
+        //     content: 'Please tell me this modal window actually worked dude. I tried something new with JS and am hoping this works first try', // optional
+        //     type: 1 // 1 for success, -1 for error, -2 for warning, leave blank for general info
+        // });
     });
 
 
@@ -1162,6 +1164,18 @@ $(() => {
     $('#pvplounge').on('click', () => {config.set('settings.client', 'pvplounge')});
     $('#feather').on('click', () => {config.set('settings.client', 'feather')});
     $('#feather').on('click', () => {config.set('settings.client', 'feather')});
+
+    let hoverTimer = -1;
+    $('#ign').on('mouseenter', '.player_ign', function() {
+        hoverTimer = setTimeout(() => {
+            PopupStats.show($(this), players.find(e => $(this).hasClass(e.name)), gamemode, gmode);
+            clearTimeout(hoverTimer);
+        }, 250);
+    }).on('mouseleave', '.player_ign', () => clearTimeout(hoverTimer));
+
+    $(document.body).on('mouseenter', () => {
+        PopupStats.reset();
+    });
 
     function getBedWarsLevel(exp){
         var level = 100 * (Math.floor(exp / 487000));
