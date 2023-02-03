@@ -1,7 +1,7 @@
 {
   "name": "abyss-overlay",
   "productName": "Abyss Overlay",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "The Official Abyss Stats Overlay",
   "homepage": "https://github.com/Chit132/abyss-overlay",
   "main": "main.js",
