@@ -5,6 +5,7 @@ const electron_log = require('electron-log'); electron_log.catchErrors({ showDia
 const isDev = require('electron-is-dev');
 const path = require('path');
 const { exec } = require('child_process');
+isDev && require('electron-reloader')(module)?.catch(() => {});
 
 if (process.platform === 'win32') app.setAppUserModelId('AbyssOverlay');
 
