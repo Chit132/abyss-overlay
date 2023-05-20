@@ -34,7 +34,6 @@ const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'ht
 var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
-
 function updateTags(){
     $.ajax({type: 'GET', async: true, url: `${tagsIP}/gimmeusers`, success: (data) => {
         tagslist = JSON.parse(data);
@@ -1150,6 +1149,62 @@ $(() => {
         $('.tabsbuttons').css({'-webkit-filter': '', 'filter': ''});
         $('#base').css("--primaryColor", 'rgb(174, 0, 255)');
         config.delete('settings.color');
+    });
+
+    $('#showhidekeybind').text(config.get('settings.keybinds.peak') ?? 'Ctrl + Shift + A')
+
+    $('#showhidekeybind').on('click', () => {
+        const SET_KEYBIND_HTML = `
+            <div class="custom-select_trigger" id="showhidekeybindmodal"><p style="text-transform: uppercase; text-align: center; width: 100%"></p></div>
+            <p style="text-align: center; width: 100%">Press ESC to save keybind</p>
+        `
+        ModalWindow.open({ title: 'Set Keybind', type: 0, content: SET_KEYBIND_HTML, focused: true});
+        ipcRenderer.send('focus', true);
+
+        var keypresses = [];
+        var paused = false;
+
+        var save = () => {
+            ipcRenderer.send('focus', false);
+            config.set('settings.keybinds.peak', keypresses.join("+"));
+            ipcRenderer.send('setKeybind', 'peak', keypresses.join("+"));
+        }
+
+        document.addEventListener("keydown", function(event) {
+            if(event.key === "Escape"){
+                save();
+                $('.modal_overlay').remove();
+                $('#showhidekeybind').text(keypresses.join(" + "))
+                return;
+            }
+            if(paused){
+                keypresses = [];
+                paused = false;
+            }
+            if(keypresses.includes(event.key)) return;
+            if (keypresses.length < 3) {
+                keypresses.push(event.key);
+                $('#showhidekeybindmodal > p').text(keypresses.join(" + "));
+            }
+        });
+
+        document.addEventListener("keyup", function(event) {
+            if(keypresses[0] == event.key){
+                paused = true;
+            }
+        });
+
+        $('#showhidekeybindmodal').on('click', () => {
+            keypresses = [];
+            paused = false;
+            $('#showhidekeybindmodal > p').text("?");
+        }); 
+    });
+
+    $('#revertshowhidekeybind').on('click', () => {
+        config.set('settings.keybinds.peak', 'CommandOrControl+Shift+A');
+        ipcRenderer.send('setKeybind', 'peak', 'CommandOrControl+Shift+A');
+        $('#showhidekeybind').text('Ctrl + Shift + A')
     });
 
     $('#badlion').on('click', {client: 'badlion'}, main);

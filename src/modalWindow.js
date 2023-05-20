@@ -67,6 +67,9 @@ const ModalWindow = {
         } else {
             options.class = '';
         }
+        if (options?.focused){
+            options.class += ' focused';
+        }
         options = Object.assign({
             title: 'Modal window',
             content: 'Hello! Umm this should not have showed up. Ignore it please <3',

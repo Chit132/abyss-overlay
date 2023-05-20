@@ -150,12 +150,20 @@
                     <span>Change client's chat log file path. Select the correct latest.log file that your client writes its chat logs to.<br>WILL RESTART OVERLAY!</span>
                 </div>
                 <div class="setting-group">
+                    <p>Keybinds</p>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <p>Show/Hide Overlay:</p>
+                        <div class="custom-select_trigger" id="showhidekeybind" style="text-align: center;">CTRL + SHIFT + A</div>
+                        <button name="Revert" class="revert" id="revertshowhidekeybind"></button>
+                    </div>
+                </div>
+                <div class="setting-group">
                     <p>Overlay Theme</p>
-                    <div style="position: absolute; top: 1px; right: 1px; width: 200px;">
+                    <div style="position: absolute;top: 1px;right: 1px;width: 200px;display: flex;justify-content: space-between;">
                         <div style="overflow: visible; height: 35px; width: 30px; z-index: 1;">
                             <div id="color-picker"></div>
                         </div>
-                        <button name="Revert" id="revertcolor"></button>
+                        <button name="Revert" class="revert" id="revertcolor"></button>
                     </div>
                 </div>
             </div>

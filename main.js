@@ -9,6 +9,17 @@ isDev && require('electron-reloader')(module)?.catch(() => {});
 
 if (process.platform === 'win32') app.setAppUserModelId('AbyssOverlay');
 
+try{require('electron-json-config');}
+catch{
+    if (process.platform !== 'darwin'){
+        fs.writeFileSync(`${homedir}/AppData/Roaming/Abyss Overlay/config.json`, JSON.stringify({}));
+    }
+    else{
+        fs.writeFileSync(`${homedir}/Library/Application Support/Abyss Overlay/config.json`, JSON.stringify({}));
+    }
+}
+const config = require('electron-json-config');
+
 let win, splash;
 function createWindow(){
     splash = new BrowserWindow({width: 400, height: 400, transparent: true, frame: false, alwaysOnTop: true, skipTaskbar: true, show: false, webPreferences: {nodeIntegration: true, contextIsolation: false}});
@@ -29,12 +40,30 @@ function createWindow(){
     win.setMenu(null);
 }
 
+let keybinds = {}
+let focused = false;
+
+function setKeybind(bind, keybind) {
+    switch (bind) {
+      case 'peak':
+        if (keybind) {
+          globalShortcut.register(keybind, () => {
+            if (win.isVisible() && !focused) win.hide();
+            else if (!win.isVisible() && !focused) { win.showInactive(); win.moveTop(); }
+          });
+          if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
+        }
+        break;
+      default:
+        keybinds[bind] = keybind;
+        break;
+    }
+  }
+  
+
 app.whenReady().then(() => {
     createWindow();
-    globalShortcut.register('CommandOrControl+Shift+A', () => {
-        if (win.isVisible()) win.hide();
-        else{win.showInactive(); win.moveTop();}
-    });
+    setKeybind('peak', config.get('settings.keybinds.peak', null) ?? 'CommandOrControl+Shift+A')
     if (isDev) {
         globalShortcut.register('CommandOrControl+Shift+F9', () => {
             win.webContents.openDevTools({mode: 'detach'});
@@ -119,4 +148,13 @@ ipcMain.on('autowho', (event) => {
         });
     }
     else runJAR(event);
+});
+
+ipcMain.on('focus', (event, focusable) => {
+    win.setFocusable(focusable);
+    focused = focusable
+});
+
+ipcMain.on('setKeybind', (event, bind, keybind) => {
+    setKeybind(bind, keybind)
 });
