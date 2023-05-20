@@ -1151,60 +1151,89 @@ $(() => {
         config.delete('settings.color');
     });
 
-    $('#showhidekeybind').text(config.get('settings.keybinds.peak') ?? 'Ctrl + Shift + A')
-
-    $('#showhidekeybind').on('click', () => {
+    function keybindController(id) {
         const SET_KEYBIND_HTML = `
-            <div class="custom-select_trigger" id="showhidekeybindmodal"><p style="text-transform: uppercase; text-align: center; width: 100%"></p></div>
+            <div class="custom-select_trigger" id="${id}keybindmodal"><p style="text-transform: uppercase; text-align: center; width: 100%"></p></div>
             <p style="text-align: center; width: 100%">Press ESC to save keybind</p>
-        `
-        ModalWindow.open({ title: 'Set Keybind', type: 0, content: SET_KEYBIND_HTML, focused: true});
+        `;
+        ModalWindow.open({ title: 'Set Keybind', type: 0, content: SET_KEYBIND_HTML, focused: true });
         ipcRenderer.send('focus', true);
-
+    
         var keypresses = [];
         var paused = false;
-
+    
         var save = () => {
             ipcRenderer.send('focus', false);
-            config.set('settings.keybinds.peak', keypresses.join("+"));
-            ipcRenderer.send('setKeybind', 'peak', keypresses.join("+"));
-        }
-
-        document.addEventListener("keydown", function(event) {
-            if(event.key === "Escape"){
+            config.set(`settings.keybinds.${id}`, keypresses.join("+"));
+            ipcRenderer.send('setKeybind', id, keypresses.join("+"));
+        };
+    
+        var keydownListener = function(event) {
+            if (event.key === "Escape") {
                 save();
                 $('.modal_overlay').remove();
-                $('#showhidekeybind').text(keypresses.join(" + "))
+                console.log(`#${id}keybind`);
+                $(`#${id}keybind`).text(keypresses.join(" + "));
+                document.removeEventListener("keydown", keydownListener);
+                document.removeEventListener("keyup", keyupListener);
                 return;
             }
-            if(paused){
+            if (paused) {
                 keypresses = [];
                 paused = false;
             }
-            if(keypresses.includes(event.key)) return;
+            if (keypresses.includes(event.key)) return;
             if (keypresses.length < 3) {
                 keypresses.push(event.key);
-                $('#showhidekeybindmodal > p').text(keypresses.join(" + "));
+                $(`#${id}keybindmodal > p`).text(keypresses.join(" + "));
             }
-        });
-
-        document.addEventListener("keyup", function(event) {
-            if(keypresses[0] == event.key){
+        };
+    
+        var keyupListener = function(event) {
+            if (keypresses[0] == event.key) {
                 paused = true;
             }
-        });
-
-        $('#showhidekeybindmodal').on('click', () => {
+        };
+    
+        document.addEventListener("keydown", keydownListener);
+        document.addEventListener("keyup", keyupListener);
+    
+        $(`#${id}keybindmodal`).on('click', () => {
             keypresses = [];
             paused = false;
-            $('#showhidekeybindmodal > p').text("?");
-        }); 
+            $(`#${id}keybindmodal > p`).text("?");
+        });
+    }
+    
+    $('#peakkeybind').text(config.get('settings.keybinds.peak') ?? 'Ctrl + Shift + A');
+    
+    $('#peakkeybind').on('click', () => {
+        keybindController('peak');
     });
-
-    $('#revertshowhidekeybind').on('click', () => {
+    
+    $('#revertpeakkeybind').on('click', () => {
         config.set('settings.keybinds.peak', 'CommandOrControl+Shift+A');
         ipcRenderer.send('setKeybind', 'peak', 'CommandOrControl+Shift+A');
-        $('#showhidekeybind').text('Ctrl + Shift + A')
+        $('#peakkeybind').text('Ctrl + Shift + A');
+    });
+    
+    ipcRenderer.on('clear', () => {
+        players = [];
+        numplayers = 0;
+        changed = true;
+        updateArray();
+    });
+    
+    $('#clearkeybind').text(config.get('settings.keybinds.clear') ?? 'Ctrl + Shift + A');
+    
+    $('#clearkeybind').on('click', () => {
+        keybindController('clear');
+    });
+    
+    $('#revertclearkeybind').on('click', () => {
+        config.set('settings.keybinds.clear', 'CommandOrControl+Shift+Z');
+        ipcRenderer.send('setKeybind', 'clear', 'CommandOrControl+Shift+Z');
+        $('#clearkeybind').text('Ctrl + Shift + Z');
     });
 
     $('#badlion').on('click', {client: 'badlion'}, main);

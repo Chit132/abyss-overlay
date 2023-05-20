@@ -53,7 +53,13 @@ function setKeybind(bind, keybind) {
           });
           if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
         }
-        break;
+        case 'clear':
+            if (keybind) {
+              globalShortcut.register(keybind, () => {
+                win.webContents.send('clear')
+              });
+              if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
+            }
       default:
         keybinds[bind] = keybind;
         break;
@@ -64,6 +70,7 @@ function setKeybind(bind, keybind) {
 app.whenReady().then(() => {
     createWindow();
     setKeybind('peak', config.get('settings.keybinds.peak', null) ?? 'CommandOrControl+Shift+A')
+    setKeybind('clear', config.get('settings.keybinds.clear', null) ?? 'CommandOrControl+Shift+Z')
     if (isDev) {
         globalShortcut.register('CommandOrControl+Shift+F9', () => {
             win.webContents.openDevTools({mode: 'detach'});
