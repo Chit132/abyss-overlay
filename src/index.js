@@ -1172,7 +1172,7 @@ $(() => {
             if (event.key === "Escape") {
                 save();
                 $('.modal_overlay').remove();
-                $(`[data-type="${id}"]`).text(keypresses.join(" + "));
+                $(`[data-type="${id}"]`).text(keypresses.join("+"));
                 document.removeEventListener("keydown", keydownListener);
                 document.removeEventListener("keyup", keyupListener);
                 return;
