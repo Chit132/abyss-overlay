@@ -31,7 +31,7 @@ const { PopupStats } = require('./popupStats.js');
 
 config.delete('players');
 const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
-var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
 function updateTags(){
@@ -745,7 +745,7 @@ function main(event){
                     else addPlayer(tmsgarray[i], 5);
                 }
             }
-            else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', true)}, 10000);}
+            else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', false)}, 10000);}
             else if (music.session === true && msg.indexOf('Party') !== -1 && msg.indexOf('>') !== -1 && msg.indexOf(':') !== -1){
                 // let tign = msg.substring(0, msg.indexOf(':')); tign = tign.substring(tign.lastIndexOf(' ')+1); tign = tign.replace(/[^\w]/g,''); if (tign.substring(tign.length-1) === 'f') tign = tign.substring(0, tign.length-1);
                 // con.log(tign);
@@ -897,7 +897,7 @@ $(() => {
     });
     $('#settings').on('click', () => {
         if ($('#settingsdiv').css('display') === 'none'){
-            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', true)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); $('#whobtn').prop('checked', config.get('settings.autowho', false));
+            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', false)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); $('#whobtn').prop('checked', config.get('settings.autowho', false));
             let tgmode = config.get('settings.bwgmode', ''), tgamemode = config.get('settings.gamemode', 0), trpc = config.get('settings.rpc_stats', 1);
             if (tgmode === '' || tgmode === undefined){$('#overall').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Overall');}
             else if (tgmode === 'eight_one_'){$('#solos').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Solos');}
@@ -1151,16 +1151,21 @@ $(() => {
         config.delete('settings.color');
     });
 
+    function colorizeKeybind(keybind) {
+        return keybind.replaceAll('+', '<span style="color: red">+</span>');
+    }
+
     function keybindController(id) {
         const SET_KEYBIND_HTML = `
+        <p style="text-align: center; width: 100%">Click the box below to record keybind</p>
             <div class="custom-select_trigger" id="${id}keybindmodal"><p style="text-transform: uppercase; text-align: center; width: 100%"></p></div>
-            <p style="text-align: center; width: 100%">Press ESC to save keybind</p>
+            <p style="text-align: center; width: 100%">Press <b>ESC</b> to save keybind</p>
         `;
         ModalWindow.open({ title: 'Set Keybind', type: 0, content: SET_KEYBIND_HTML, focused: true });
         ipcRenderer.send('focus', true);
     
-        var keypresses = [];
-        var paused = false;
+        let keypresses = [];
+        let paused = false;
     
         var save = () => {
             ipcRenderer.send('focus', false);
@@ -1172,7 +1177,7 @@ $(() => {
             if (event.key === "Escape") {
                 save();
                 $('.modal_overlay').remove();
-                $(`[data-type="${id}"]`).text(keypresses.join("+"));
+                $(`[data-type="${id}"]`).html(colorizeKeybind(keypresses.join("+")));
                 document.removeEventListener("keydown", keydownListener);
                 document.removeEventListener("keyup", keyupListener);
                 return;
@@ -1184,7 +1189,7 @@ $(() => {
             if (keypresses.includes(event.key)) return;
             if (keypresses.length < 3) {
                 keypresses.push(event.key);
-                $(`#${id}keybindmodal > p`).text(keypresses.join(" + "));
+                $(`#${id}keybindmodal > p`).html(colorizeKeybind(keypresses.join(" + ")));
             }
         };
     
@@ -1206,14 +1211,14 @@ $(() => {
 
     $('.keybind').on('click', function() { keybindController($(this).data().type); });
     
-    $('.keybind').text(function() { return config.get(`settings.keybinds.${$(this).data().type}`) ?? $(this).data().default; });
+    $('.keybind').html(function() { return (colorizeKeybind(config.get(`settings.keybinds.${$(this).data().type}`) ?? $(this).data().default)); });
     
     $('.revertkeybind').on('click', function() {
         let keybindElem = $(this).parent().find('.keybind');
         config.set(`settings.keybinds.${keybindElem.data().type}`, keybindElem.data().default);
         ipcRenderer.send('setKeybind', keybindElem.data().type, keybindElem.data().default);
-        keybindElem.text(keybindElem.data().default);
-    });    
+        keybindElem.html(colorizeKeybind(keybindElem.data().default));
+    });
     
     ipcRenderer.on('clear', () => {
         players = [];

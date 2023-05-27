@@ -41,7 +41,6 @@ function createWindow(){
 }
 
 let keybinds = {}
-let focused = false;
 let through = false;
 
 function setKeybind(bind, keybind) {
@@ -49,8 +48,8 @@ function setKeybind(bind, keybind) {
       case 'peak':
         if (keybind) {
           globalShortcut.register(keybind, () => {
-            if (win.isVisible() && !focused) win.hide();
-            else if (!win.isVisible() && !focused) { win.showInactive(); win.moveTop(); }
+            if (win.isVisible()) win.hide();
+            else if (!win.isVisible()) { win.showInactive(); win.moveTop(); }
           });
           if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
         }
@@ -170,7 +169,6 @@ ipcMain.on('autowho', (event) => {
 
 ipcMain.on('focus', (event, focusable) => {
     win.setFocusable(focusable);
-    focused = focusable
 });
 
 ipcMain.on('setKeybind', (event, bind, keybind) => {
