@@ -149,13 +149,35 @@
                     </div>
                     <span>Change client's chat log file path. Select the correct latest.log file that your client writes its chat logs to.<br>WILL RESTART OVERLAY!</span>
                 </div>
+                <!--
+                    To add a keybind, copy and paste one of the divs, changing the "data-type" and "data-default"
+                    Then add a case to the main.js in the switch statement with the logic in setKeybind
+                -->
+                <div class="setting-group">
+                    <p>Keybinds</p>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <p>Show/Hide Overlay:</p>
+                        <div class="custom-select_trigger keybind" data-type="peak" data-default="CommandOrControl+Shift+A" style="text-align: center;">CTRL + SHIFT + A</div>
+                        <button name="Revert" class="revert revertkeybind"></button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <p>Clear Player List:</p>
+                        <div class="custom-select_trigger keybind" data-type="clear" data-default="CommandOrControl+Shift+Z" style="text-align: center;">CTRL + SHIFT + Z</div>
+                        <button name="Revert" class="revert revertkeybind"></button>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <p>Toggle Click-Through:</p>
+                        <div class="custom-select_trigger keybind" data-type="through" data-default="CommandOrControl+Shift+T" style="text-align: center;">CTRL + SHIFT + T</div>
+                        <button name="Revert" class="revert revertkeybind"></button>
+                    </div>
+                </div>
                 <div class="setting-group">
                     <p>Overlay Theme</p>
-                    <div style="position: absolute; top: 1px; right: 1px; width: 200px;">
+                    <div style="position: absolute;top: 1px;right: 1px;width: 200px;display: flex;justify-content: space-between;">
                         <div style="overflow: visible; height: 35px; width: 30px; z-index: 1;">
                             <div id="color-picker"></div>
                         </div>
-                        <button name="Revert" id="revertcolor"></button>
+                        <button name="Revert" class="revert" id="revertcolor"></button>
                     </div>
                 </div>
             </div>

@@ -5,8 +5,20 @@ const electron_log = require('electron-log'); electron_log.catchErrors({ showDia
 const isDev = require('electron-is-dev');
 const path = require('path');
 const { exec } = require('child_process');
+isDev && require('electron-reloader')(module)?.catch(() => {});
 
 if (process.platform === 'win32') app.setAppUserModelId('AbyssOverlay');
+
+try{require('electron-json-config');}
+catch{
+    if (process.platform !== 'darwin'){
+        fs.writeFileSync(`${homedir}/AppData/Roaming/Abyss Overlay/config.json`, JSON.stringify({}));
+    }
+    else{
+        fs.writeFileSync(`${homedir}/Library/Application Support/Abyss Overlay/config.json`, JSON.stringify({}));
+    }
+}
+const config = require('electron-json-config');
 
 let win, splash;
 function createWindow(){
@@ -28,12 +40,48 @@ function createWindow(){
     win.setMenu(null);
 }
 
+let keybinds = {}
+let focused = false;
+let through = false;
+
+function setKeybind(bind, keybind) {
+    switch (bind) {
+      case 'peak':
+        if (keybind) {
+          globalShortcut.register(keybind, () => {
+            if (win.isVisible() && !focused) win.hide();
+            else if (!win.isVisible() && !focused) { win.showInactive(); win.moveTop(); }
+          });
+          if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
+        }
+        case 'clear':
+            if (keybind) {
+              globalShortcut.register(keybind, () => {
+                win.webContents.send('clear')
+              });
+              if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
+            }
+        case 'through':
+            if (keybind) {
+                globalShortcut.register(keybind, () => {
+                  through = !through;
+                  if(through) win.setIgnoreMouseEvents(true);
+                  else if(!through) win.setIgnoreMouseEvents(false);
+                });
+                if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
+              }
+      default:
+        keybinds[bind] = keybind;
+        break;
+    }
+  }
+  
+
 app.whenReady().then(() => {
     createWindow();
-    globalShortcut.register('CommandOrControl+Shift+A', () => {
-        if (win.isVisible()) win.hide();
-        else{win.showInactive(); win.moveTop();}
-    });
+    setKeybind('peak', config.get('settings.keybinds.peak', null) ?? 'CommandOrControl+Shift+A')
+    setKeybind('clear', config.get('settings.keybinds.clear', null) ?? 'CommandOrControl+Shift+Z')
+    setKeybind('through', config.get('settings.keybinds.through', null) ?? 'CommandOrControl+Shift+T')
     if (isDev) {
         globalShortcut.register('CommandOrControl+Shift+F9', () => {
             win.webContents.openDevTools({mode: 'detach'});
@@ -118,4 +166,13 @@ ipcMain.on('autowho', (event) => {
         });
     }
     else runJAR(event);
+});
+
+ipcMain.on('focus', (event, focusable) => {
+    win.setFocusable(focusable);
+    focused = focusable
+});
+
+ipcMain.on('setKeybind', (event, bind, keybind) => {
+    setKeybind(bind, keybind)
 });

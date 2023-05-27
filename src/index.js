@@ -34,7 +34,6 @@ const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'ht
 var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
-
 function updateTags(){
     $.ajax({type: 'GET', async: true, url: `${tagsIP}/gimmeusers`, success: (data) => {
         tagslist = JSON.parse(data);
@@ -1150,6 +1149,77 @@ $(() => {
         $('.tabsbuttons').css({'-webkit-filter': '', 'filter': ''});
         $('#base').css("--primaryColor", 'rgb(174, 0, 255)');
         config.delete('settings.color');
+    });
+
+    function keybindController(id) {
+        const SET_KEYBIND_HTML = `
+            <div class="custom-select_trigger" id="${id}keybindmodal"><p style="text-transform: uppercase; text-align: center; width: 100%"></p></div>
+            <p style="text-align: center; width: 100%">Press ESC to save keybind</p>
+        `;
+        ModalWindow.open({ title: 'Set Keybind', type: 0, content: SET_KEYBIND_HTML, focused: true });
+        ipcRenderer.send('focus', true);
+    
+        var keypresses = [];
+        var paused = false;
+    
+        var save = () => {
+            ipcRenderer.send('focus', false);
+            config.set(`settings.keybinds.${id}`, keypresses.join("+"));
+            ipcRenderer.send('setKeybind', id, keypresses.join("+"));
+        };
+    
+        var keydownListener = function(event) {
+            if (event.key === "Escape") {
+                save();
+                $('.modal_overlay').remove();
+                $(`[data-type="${id}"]`).text(keypresses.join("+"));
+                document.removeEventListener("keydown", keydownListener);
+                document.removeEventListener("keyup", keyupListener);
+                return;
+            }
+            if (paused) {
+                keypresses = [];
+                paused = false;
+            }
+            if (keypresses.includes(event.key)) return;
+            if (keypresses.length < 3) {
+                keypresses.push(event.key);
+                $(`#${id}keybindmodal > p`).text(keypresses.join(" + "));
+            }
+        };
+    
+        var keyupListener = function(event) {
+            if (keypresses[0] == event.key) {
+                paused = true;
+            }
+        };
+    
+        document.addEventListener("keydown", keydownListener);
+        document.addEventListener("keyup", keyupListener);
+    
+        $(`#${id}keybindmodal`).on('click', () => {
+            keypresses = [];
+            paused = false;
+            $(`#${id}keybindmodal > p`).text("?");
+        });
+    }
+
+    $('.keybind').on('click', function() { keybindController($(this).data().type); });
+    
+    $('.keybind').text(function() { return config.get(`settings.keybinds.${$(this).data().type}`) ?? $(this).data().default; });
+    
+    $('.revertkeybind').on('click', function() {
+        let keybindElem = $(this).parent().find('.keybind');
+        config.set(`settings.keybinds.${keybindElem.data().type}`, keybindElem.data().default);
+        ipcRenderer.send('setKeybind', keybindElem.data().type, keybindElem.data().default);
+        keybindElem.text(keybindElem.data().default);
+    });    
+    
+    ipcRenderer.on('clear', () => {
+        players = [];
+        numplayers = 0;
+        changed = true;
+        updateArray();
     });
 
     $('#badlion').on('click', {client: 'badlion'}, main);

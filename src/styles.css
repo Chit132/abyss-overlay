@@ -45,6 +45,7 @@ p{
     font-size: "100px";
     color: white;
     font-family: "Minecraftia";
+    filter: drop-shadow(2px 2px black);
 }
 div{
     margin: 0;
@@ -476,14 +477,11 @@ li{
 .yellowgradient{
     color: goldenrod;
 }
-#revertcolor{
+.revert{
     background: transparent;
     background-image: url("../assets/revert1.png");
     background-size: cover;
-    display: inline-block;
-    position: absolute;
-    top: 2px;
-    right: 2px;
+    display: block;
     height: 35px;
     width: 35px;
     margin: 0;
@@ -491,7 +489,7 @@ li{
     border: none;
     outline: none;
 }
-#revertcolor:hover{
+.revert:hover{
     background-image: url("../assets/revert2.png");
     background-size: cover;
     height: 35px;
@@ -522,12 +520,12 @@ li{
 }
 .setting-group {
     position: relative;
-    margin: auto;
     background-color: rgba(0, 0, 0, 0.6);
     border-radius: 10px;
     text-align: left;
+    padding: 0 10px;
 }
-.setting-group > p {
+.setting-group > p:first-of-type {
     margin: 5px;
     height: 36px;
     line-height: 36px;
@@ -1004,6 +1002,10 @@ input:checked + .slider:before{
     margin: 0;
     padding: 5px;
     border-top: 1px solid black;
+}
+
+.focused{
+    backdrop-filter: blur(1px);
 }
 
 @keyframes popout {
