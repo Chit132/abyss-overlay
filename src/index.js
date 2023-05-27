@@ -1236,6 +1236,18 @@ $(() => {
         $('#clearkeybind').text('Ctrl + Shift + Z');
     });
 
+    $('#throughkeybind').text(config.get('settings.keybinds.through') ?? 'Ctrl + Shift + T');
+    
+    $('#throughkeybind').on('click', () => {
+        keybindController('through');
+    });
+    
+    $('#revertthroughkeybind').on('click', () => {
+        config.set('settings.keybinds.through', 'CommandOrControl+Shift+T');
+        ipcRenderer.send('setKeybind', 'through', 'CommandOrControl+Shift+T');
+        $('#throughkeybind').text('Ctrl + Shift + T');
+    });
+
     $('#badlion').on('click', {client: 'badlion'}, main);
     $('#lunar').on('click', {client: 'lunar'}, main);
     $('#vanilla').on('click', {client: 'vanilla'}, main);

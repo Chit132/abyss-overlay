@@ -42,6 +42,7 @@ function createWindow(){
 
 let keybinds = {}
 let focused = false;
+let through = false;
 
 function setKeybind(bind, keybind) {
     switch (bind) {
@@ -60,6 +61,15 @@ function setKeybind(bind, keybind) {
               });
               if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
             }
+        case 'through':
+            if (keybind) {
+                globalShortcut.register(keybind, () => {
+                  through = !through;
+                  if(through) win.setIgnoreMouseEvents(true);
+                  else if(!through) win.setIgnoreMouseEvents(false);
+                });
+                if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
+              }
       default:
         keybinds[bind] = keybind;
         break;
@@ -71,6 +81,7 @@ app.whenReady().then(() => {
     createWindow();
     setKeybind('peak', config.get('settings.keybinds.peak', null) ?? 'CommandOrControl+Shift+A')
     setKeybind('clear', config.get('settings.keybinds.clear', null) ?? 'CommandOrControl+Shift+Z')
+    setKeybind('through', config.get('settings.keybinds.through', null) ?? 'CommandOrControl+Shift+T')
     if (isDev) {
         globalShortcut.register('CommandOrControl+Shift+F9', () => {
             win.webContents.openDevTools({mode: 'detach'});
