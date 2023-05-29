@@ -27,6 +27,7 @@ const config = require('electron-json-config');
 const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, HypixelColors } = require('./helpers.js');
 const { ModalWindow } = require('./modalWindow.js');
 const { PopupStats } = require('./popupStats.js');
+const { Clients } = require('./clients.js');
 
 
 config.delete('players');
@@ -557,7 +558,16 @@ ipcRenderer.on('autowho-err', () => {
 
 function main(event){
     currentWindow = remote.BrowserWindow.getAllWindows(); currentWindow = currentWindow[0];
+
     $('.clientbutton').css('display', 'none'); $('.startup').css('display', 'none'); $('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block'); $('.tabsbuttons').css('display', 'inline-block'); $('#show').css('display', 'inline-block');
+    
+    const Client = new Clients(homedir, event.data.client);
+    const detected = Client.autoDetect();
+    const chosen = Client.chosen;
+
+    // do special css for lunar
+    // check and log if chosen and detected are not the same
+
 
     if (event.data.client === 'lunar'){
         $('#clientimg').attr('src', 'https://img.icons8.com/nolan/2x/lunar-client.png'); $('#clientimg').css({'height': '34px', 'top': '0px'});
