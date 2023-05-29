@@ -539,7 +539,7 @@ function updateMusic(){
             clearMusic(0, true);
         }
     }, error: () => {
-        clearMusic(1, -1);main
+        clearMusic(1, -1);
         console.log('API ERROR with getMusicSession'); $('#startmusic').css('display', 'none'); dialog.showMessageBox(currentWindow, {title: 'API ERROR!', detail: 'Music API could be down for the moment :( Contact the devs in the Abyss Overlay Discord server please!', type: 'error'});
     }});
 }
@@ -565,39 +565,14 @@ function main(event){
     const detected = Client.autoDetect();
     const chosen = Client.chosen;
 
-    // do special css for lunar
-    // check and log if chosen and detected are not the same
+    $('#clientimg').attr('src', Clients.logos[chosen[0]]);
+    if (chosen[0] === 'lunar') $('#clientimg').css({'height': '34px', 'top': '0px'});
+    logpath = chosen[1];
 
+    if (chosen[0] !== detected[0]) {
+        con.log(`New more recent log file found: ${detected[0]}`);
+    }
 
-    if (event.data.client === 'lunar'){
-        $('#clientimg').attr('src', 'https://img.icons8.com/nolan/2x/lunar-client.png'); $('#clientimg').css({'height': '34px', 'top': '0px'});
-        logpath = config.get('lunarlog', -1);
-        if (logpath === -1) {
-            let log_18 = { path: `${homedir}/.lunarclient/offline/1.8/logs/latest.log`, modified: 0 };
-            let log_189 = { path: `${homedir}/.lunarclient/offline/1.8.9/logs/latest.log`, modified: 0 };
-            let log_multiver = { path: `${homedir}/.lunarclient/offline/multiver/logs/latest.log`, modified: 0 };
-            if (fs.existsSync(log_18.path)) log_18.modified = fs.statSync(log_18.path).mtime;
-            if (fs.existsSync(log_189.path)) log_189.modified = fs.statSync(log_189.path).mtime;
-            if (fs.existsSync(log_multiver.path)) log_multiver.modified = fs.statSync(log_multiver.path).mtime;
-            const modifiedLogs = [ log_18, log_189, log_multiver ];
-            modifiedLogs.sort((a, b) => { return b.modified - a.modified });
-            logpath = modifiedLogs[0].path;
-        }
-    }
-    else if (process.platform === 'darwin'){
-        if (event.data.client === 'badlion'){logpath = config.get('badlionlog', `${homedir}/Library/Application Support/minecraft/logs/blclient/minecraft/latest.log`); $('#clientimg').attr('src', 'https://www.badlion.net/static/assets/images/logos/badlion-logo.png');}
-        else if (event.data.client === 'vanilla'){logpath = config.get('vanillalog', `${homedir}/Library/Application Support/minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706');}
-        else if (event.data.client === 'pvplounge'){logpath = config.get('pvploungelog', `${homedir}/Library/Application Support/.pvplounge/logs/latest.log`); $('#clientimg').attr('src', 'https://www.saashub.com/images/app/service_logos/158/4d406mrxxaj7/large.png?1601167229');}
-        else if (event.data.client === 'labymod'){logpath = config.get('labymodlog', `${homedir}/Library/Application Support/minecraft/logs/fml-client-latest.log`); $('#clientimg').attr('src', 'https://www.labymod.net/page/tpl/assets/images/logo_web.png');}
-        else if (event.data.client === 'feather'){logpath = config.get('featherlog', `${homedir}/Library/Application Support/minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://i.imgur.com/9ZfHrCw.png');}
-    }
-    else{
-        if (event.data.client === 'badlion'){logpath = config.get('badlionlog', `${homedir}/AppData/Roaming/.minecraft/logs/blclient/minecraft/latest.log`); $('#clientimg').attr('src', 'https://www.badlion.net/static/assets/images/logos/badlion-logo.png');}
-        else if (event.data.client === 'vanilla'){logpath = config.get('vanillalog', `${homedir}/AppData/Roaming/.minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706');}
-        else if (event.data.client === 'pvplounge'){logpath = config.get('pvploungelog', `${homedir}/AppData/Roaming/.pvplounge/logs/latest.log`); $('#clientimg').attr('src', 'https://www.saashub.com/images/app/service_logos/158/4d406mrxxaj7/large.png?1601167229');}
-        else if (event.data.client === 'labymod'){logpath = config.get('labymodlog', `${homedir}/AppData/Roaming/.minecraft/logs/fml-client-latest.log`); $('#clientimg').attr('src', 'https://www.labymod.net/page/tpl/assets/images/logo_web.png');}
-        else if (event.data.client === 'feather'){logpath = config.get('featherlog', `${homedir}/AppData/Roaming/.minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://i.imgur.com/9ZfHrCw.png');}
-    }
     //con.log(logpath);
 
     if (!fs.existsSync(logpath)) {
@@ -846,6 +821,8 @@ function main(event){
         }
     });
     tail.on('error', (err) => {con.log('error', err); goodfile = false; updateHTML();});
+    
+    return detected;
 }
 
 $(() => {
@@ -859,10 +836,21 @@ $(() => {
         });
     }
 
-    if (config.get('settings.client', -1) !== -1){
+    if (config.get('settings.client', -1) !== -1) {
         let tevent = {data: {client: config.get('settings.client')}};
-        main(tevent);
+        let detectedClient = main(tevent);
+        
+        if (detectedClient[0] !== tevent.data.client) {
+            ModalWindow.open({
+                title: 'New active client detected!',
+                content: `A more recently used client has been detected: ${Clients.displayNames[detectedClient[0]]}. <br>
+                            The overlay is currently focused on client: ${Clients.displayNames[tevent.data.client]}. <br><br>
+                            If you are using a different client than ${Clients.displayNames[tevent.data.client]}, then go to overlay settings and click "Select Client"`,
+                type: -2
+            });
+        }
     }
+
     if (config.get('changelog', undefined) !== packageJSON.version){$('#changelogVersion').html(`Changelog v${packageJSON.version}`); $('#changelog').css('display', 'block');}
 
     currentWindow = remote.BrowserWindow.getAllWindows(); currentWindow = currentWindow[0];

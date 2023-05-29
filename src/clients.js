@@ -2,15 +2,6 @@ const fs = require('fs');
 const config = require('electron-json-config');
 
 
-const logos = {
-    'lunar': 'https://img.icons8.com/nolan/2x/lunar-client.png',
-    'badlion': 'https://www.badlion.net/static/assets/images/logos/badlion-logo.png',
-    'vanilla': 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706',
-    'pvplounge': 'https://www.saashub.com/images/app/service_logos/158/4d406mrxxaj7/large.png?1601167229',
-    'labymod': 'https://www.labymod.net/page/tpl/assets/images/logo_web.png',
-    'feather': 'https://i.imgur.com/9ZfHrCw.png'
-}
-
 class Clients {
     constructor(homedir, chosen) {
         const clients = {
@@ -33,6 +24,24 @@ class Clients {
         this._chosen = chosen;
         this.paths = clients[process.platform === 'darwin' ? 'darwin' : 'win32']
         this.paths.lunar = this.#detectLunar(homedir);
+    }
+
+    static logos = {
+        'lunar': 'https://img.icons8.com/nolan/2x/lunar-client.png',
+        'badlion': 'https://www.badlion.net/static/assets/images/logos/badlion-logo.png',
+        'vanilla': 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706',
+        'pvplounge': 'https://www.saashub.com/images/app/service_logos/158/4d406mrxxaj7/large.png?1601167229',
+        'labymod': 'https://www.labymod.net/page/tpl/assets/images/logo_web.png',
+        'feather': 'https://i.imgur.com/9ZfHrCw.png'
+    }
+
+    static displayNames = {
+        'lunar': 'Lunar',
+        'badlion': 'Badlion',
+        'vanilla': 'Vanilla/Other',
+        'pvplounge': 'PvP Lounge',
+        'labymod': 'Labymod',
+        'feather': 'Feather'
     }
 
     #detectLunar(homedir) {
@@ -70,11 +79,11 @@ class Clients {
             }
         }
         
-        return [max.client, this.paths[max.client], logos[max.client]];
+        return [max.client, this.paths[max.client]];
     }
 
     get chosen() {
-        return [this._chosen, this.paths[this._chosen], logos[this._chosen]]
+        return [this._chosen, this.paths[this._chosen]];
     }
 }
 
