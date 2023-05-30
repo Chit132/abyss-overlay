@@ -1151,8 +1151,77 @@ $(() => {
         config.delete('settings.color');
     });
 
-    function colorizeKeybind(keybind) {
-        return keybind.replaceAll('+', '<span style="color: red">+</span>');
+    function mapKeyPressToAccelerator(key) {
+        if (/^[a-zA-Z0-9]$/.test(key)) {
+          return key;
+        }
+      
+        switch (key) {
+          case 'Control':
+            return 'Ctrl';
+          case 'Meta':
+            return 'Cmd';
+          case 'Alt':
+            return 'Alt';
+          case 'Shift':
+            return 'Shift';
+          case 'CapsLock':
+            return 'CapsLock';
+          case 'NumLock':
+            return 'NumLock';
+          case 'ScrollLock':
+            return 'ScrollLock';
+          case 'Tab':
+            return 'Tab';
+          case ' ':
+            return 'Space';
+          case 'Backspace':
+            return 'Backspace';
+          case 'Delete':
+            return 'Delete';
+          case 'Enter':
+            return 'Enter';
+          case 'ArrowUp':
+            return 'Up';
+          case 'ArrowDown':
+            return 'Down';
+          case 'ArrowLeft':
+            return 'Left';
+          case 'ArrowRight':
+            return 'Right';
+          case 'Home':
+            return 'Home';
+          case 'End':
+            return 'End';
+          case 'PageUp':
+            return 'PageUp';
+          case 'PageDown':
+            return 'PageDown';
+          case 'Escape':
+            return 'Esc';
+          default:
+            if (key.startsWith('F') && key.length === 2 && !isNaN(parseInt(key[1]))) {
+              const n = parseInt(key[1]);
+              if (n >= 1 && n <= 24) {
+                return 'F' + n;
+              }
+            }
+            return null;
+        }
+      }
+      
+      
+
+    function normalizeKeybind(keybind) {
+        keybind = keybind.length === 0 ? '<span style="color: grey">Unbound</span>' : keybind;
+        keybind = keybind.replaceAll('CommandOrControl', () => {
+            if(process.platform === "darwin") return "Command"
+            else return "Control"
+        });
+        keybind = keybind.replaceAll(/Ctrl|Control/g, '<span style="color: #84cc16;">Control</span>');
+        keybind = keybind.replaceAll(/Cmd|Command/g, '<span style="color: #84cc16;">Command</span>');
+        keybind = keybind.replaceAll('Shift', '<span style="color: #f59e0b;">Shift</span>');
+        return keybind.replaceAll('+', '<span style="color: red; margin-inline: 5px;">+</span>');
     }
 
     function keybindController(id) {
@@ -1177,7 +1246,7 @@ $(() => {
             if (event.key === "Escape") {
                 save();
                 $('.modal_overlay').remove();
-                $(`[data-type="${id}"]`).html(colorizeKeybind(keypresses.join("+")));
+                $(`[data-type="${id}"]`).html(normalizeKeybind(keypresses.join("+")));
                 document.removeEventListener("keydown", keydownListener);
                 document.removeEventListener("keyup", keyupListener);
                 return;
@@ -1186,10 +1255,13 @@ $(() => {
                 keypresses = [];
                 paused = false;
             }
-            if (keypresses.includes(event.key)) return;
+            let mappedKey = mapKeyPressToAccelerator(event.key)
+            if (keypresses.includes(mappedKey)) return;
             if (keypresses.length < 3) {
-                keypresses.push(event.key);
-                $(`#${id}keybindmodal > p`).html(colorizeKeybind(keypresses.join(" + ")));
+                if(mappedKey != null){
+                    keypresses.push(mappedKey)
+                    $(`#${id}keybindmodal > p`).html(normalizeKeybind(keypresses.join(" + ")));
+                }
             }
         };
     
@@ -1211,13 +1283,13 @@ $(() => {
 
     $('.keybind').on('click', function() { keybindController($(this).data().type); });
     
-    $('.keybind').html(function() { return (colorizeKeybind(config.get(`settings.keybinds.${$(this).data().type}`) ?? $(this).data().default)); });
+    $('.keybind').html(function() { return (normalizeKeybind(config.get(`settings.keybinds.${$(this).data().type}`) ?? $(this).data().default)); });
     
     $('.revertkeybind').on('click', function() {
         let keybindElem = $(this).parent().find('.keybind');
         config.set(`settings.keybinds.${keybindElem.data().type}`, keybindElem.data().default);
         ipcRenderer.send('setKeybind', keybindElem.data().type, keybindElem.data().default);
-        keybindElem.html(colorizeKeybind(keybindElem.data().default));
+        keybindElem.html(normalizeKeybind(keybindElem.data().default));
     });
     
     ipcRenderer.on('clear', () => {
