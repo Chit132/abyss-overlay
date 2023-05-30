@@ -1005,6 +1005,7 @@ input:checked + .slider:before{
 
 .focused{
     backdrop-filter: blur(1px);
+    pointer-events: none !important;
 }
 
 @keyframes popout {

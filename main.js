@@ -44,37 +44,51 @@ let keybinds = {}
 let through = false;
 
 function setKeybind(bind, keybind) {
+    //unbind key
+    if(!keybind){
+        if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
+        keybinds[bind] = keybind;
+        return;
+    }
+
+    //bind key
     switch (bind) {
       case 'peak':
-        if (keybind) {
-          globalShortcut.register(keybind, () => {
-            if (win.isVisible()) win.hide();
-            else if (!win.isVisible()) { win.showInactive(); win.moveTop(); }
-          });
-          if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
-        }
-        case 'clear':
-            if (keybind) {
-              globalShortcut.register(keybind, () => {
-                win.webContents.send('clear')
-              });
-              if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
+            try {
+                globalShortcut.register(keybind, () => {
+                    if (win.isVisible()) win.hide();
+                    else if (!win.isVisible()) { win.showInactive(); win.moveTop(); }
+                }); 
+            } catch (error) {
+                console.log(`Error whilst setting "${bind}" to "${keybind}"` , error)
+                break;
+            }
+         case 'clear':
+            try {
+                globalShortcut.register(keybind, () => {
+                    win.webContents.send('clear')
+                });
+            } catch(error) {
+                console.log(`Error whilst setting "${bind}" to "${keybind}"` , error)
+                break;
             }
         case 'through':
-            if (keybind) {
+            try {
                 globalShortcut.register(keybind, () => {
-                  through = !through;
-                  if(through) win.setIgnoreMouseEvents(true);
-                  else if(!through) win.setIgnoreMouseEvents(false);
-                });
-                if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
-              }
+                    through = !through;
+                    if(through) win.setIgnoreMouseEvents(true);
+                    else if(!through) win.setIgnoreMouseEvents(false);
+                }); 
+            } catch (error) {
+                console.log(`Error whilst setting "${bind}" to "${keybind}"` , error)      
+                break;
+            }
       default:
+        if(keybinds[bind]){ globalShortcut.unregister(keybinds[bind]); }
         keybinds[bind] = keybind;
         break;
     }
-  }
-  
+}
 
 app.whenReady().then(() => {
     createWindow();
