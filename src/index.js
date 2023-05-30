@@ -32,9 +32,8 @@ const { Clients } = require('./clients.js');
 
 config.delete('players');
 const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
-var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
-
 
 function updateTags(){
     $.ajax({type: 'GET', async: true, url: `${tagsIP}/gimmeusers`, success: (data) => {
@@ -731,7 +730,7 @@ function main(event){
                     else addPlayer(tmsgarray[i], 5);
                 }
             }
-            else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', true)}, 10000);}
+            else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', false)}, 10000);}
             else if (music.session === true && msg.indexOf('Party') !== -1 && msg.indexOf('>') !== -1 && msg.indexOf(':') !== -1){
                 // let tign = msg.substring(0, msg.indexOf(':')); tign = tign.substring(tign.lastIndexOf(' ')+1); tign = tign.replace(/[^\w]/g,''); if (tign.substring(tign.length-1) === 'f') tign = tign.substring(0, tign.length-1);
                 // con.log(tign);
@@ -896,7 +895,7 @@ $(() => {
     });
     $('#settings').on('click', () => {
         if ($('#settingsdiv').css('display') === 'none'){
-            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', true)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); $('#whobtn').prop('checked', config.get('settings.autowho', false));
+            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', false)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); $('#whobtn').prop('checked', config.get('settings.autowho', false));
             let tgmode = config.get('settings.bwgmode', ''), tgamemode = config.get('settings.gamemode', 0), trpc = config.get('settings.rpc_stats', 1);
             if (tgmode === '' || tgmode === undefined){$('#overall').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Overall');}
             else if (tgmode === 'eight_one_'){$('#solos').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Solos');}
@@ -1148,6 +1147,154 @@ $(() => {
         $('.tabsbuttons').css({'-webkit-filter': '', 'filter': ''});
         $('#base').css("--primaryColor", 'rgb(174, 0, 255)');
         config.delete('settings.color');
+    });
+
+    function mapKeyPressToAccelerator(key) {
+        if (/^[a-zA-Z0-9]$/.test(key)) {
+          return key;
+        }
+      
+        switch (key) {
+          case 'Control':
+            return 'Ctrl';
+          case 'Meta':
+            return 'Cmd';
+          case 'Alt':
+            return 'Alt';
+          case 'Shift':
+            return 'Shift';
+          case 'CapsLock':
+            return 'CapsLock';
+          case 'NumLock':
+            return 'NumLock';
+          case 'ScrollLock':
+            return 'ScrollLock';
+          case 'Tab':
+            return 'Tab';
+          case ' ':
+            return 'Space';
+          case 'Backspace':
+            return 'Backspace';
+          case 'Delete':
+            return 'Delete';
+          case 'Enter':
+            return 'Enter';
+          case 'ArrowUp':
+            return 'Up';
+          case 'ArrowDown':
+            return 'Down';
+          case 'ArrowLeft':
+            return 'Left';
+          case 'ArrowRight':
+            return 'Right';
+          case 'Home':
+            return 'Home';
+          case 'End':
+            return 'End';
+          case 'PageUp':
+            return 'PageUp';
+          case 'PageDown':
+            return 'PageDown';
+          case 'Escape':
+            return 'Esc';
+          default:
+            if (key.startsWith('F') && key.length === 2 && !isNaN(parseInt(key[1]))) {
+              const n = parseInt(key[1]);
+              if (n >= 1 && n <= 24) {
+                return 'F' + n;
+              }
+            }
+            return null;
+        }
+      }
+      
+      
+
+    function normalizeKeybind(keybind) {
+        keybind = keybind.length === 0 ? '<span style="color: grey">Unbound</span>' : keybind;
+        keybind = keybind.replaceAll('CommandOrControl', () => {
+            if(process.platform === "darwin") return "Command"
+            else return "Control"
+        });
+        keybind = keybind.replaceAll(/Ctrl|Control/g, '<span style="color: #84cc16;">Control</span>');
+        keybind = keybind.replaceAll(/Cmd|Command/g, '<span style="color: #84cc16;">Command</span>');
+        keybind = keybind.replaceAll('Shift', '<span style="color: #f59e0b;">Shift</span>');
+        return keybind.replaceAll('+', '<span style="color: red; margin-inline: 5px;">+</span>');
+    }
+
+    function keybindController(id) {
+        const SET_KEYBIND_HTML = `
+        <p style="text-align: center; width: 100%">Click the box below to record keybind</p>
+            <div class="custom-select_trigger" id="${id}keybindmodal"><p style="text-transform: uppercase; text-align: center; width: 100%"></p></div>
+            <p style="text-align: center; width: 100%">Press <b>ESC</b> to save keybind</p>
+        `;
+        ModalWindow.open({ title: 'Set Keybind', type: 0, content: SET_KEYBIND_HTML, focused: true });
+        ipcRenderer.send('focus', true);
+    
+        let keypresses = [];
+        let paused = false;
+    
+        var save = () => {
+            ipcRenderer.send('focus', false);
+            config.set(`settings.keybinds.${id}`, keypresses.join("+"));
+            ipcRenderer.send('setKeybind', id, keypresses.join("+"));
+        };
+    
+        var keydownListener = function(event) {
+            if (event.key === "Escape") {
+                save();
+                $('.modal_overlay').remove();
+                $(`[data-type="${id}"]`).html(normalizeKeybind(keypresses.join("+")));
+                document.removeEventListener("keydown", keydownListener);
+                document.removeEventListener("keyup", keyupListener);
+                return;
+            }
+            if (paused) {
+                keypresses = [];
+                paused = false;
+            }
+            let mappedKey = mapKeyPressToAccelerator(event.key)
+            if (keypresses.includes(mappedKey)) return;
+            if (keypresses.length < 3) {
+                if(mappedKey != null){
+                    keypresses.push(mappedKey)
+                    $(`#${id}keybindmodal > p`).html(normalizeKeybind(keypresses.join(" + ")));
+                }
+            }
+        };
+    
+        var keyupListener = function(event) {
+            if (keypresses[0] == event.key) {
+                paused = true;
+            }
+        };
+    
+        document.addEventListener("keydown", keydownListener);
+        document.addEventListener("keyup", keyupListener);
+    
+        $(`#${id}keybindmodal`).on('click', () => {
+            keypresses = [];
+            paused = false;
+            $(`#${id}keybindmodal > p`).text("?");
+        });
+    }
+
+    $('.keybind').on('click', function() { keybindController($(this).data().type); });
+    
+    $('.keybind').html(function() { return (normalizeKeybind(config.get(`settings.keybinds.${$(this).data().type}`) ?? $(this).data().default)); });
+    
+    $('.revertkeybind').on('click', function() {
+        let keybindElem = $(this).parent().find('.keybind');
+        config.set(`settings.keybinds.${keybindElem.data().type}`, keybindElem.data().default);
+        ipcRenderer.send('setKeybind', keybindElem.data().type, keybindElem.data().default);
+        keybindElem.html(normalizeKeybind(keybindElem.data().default));
+    });
+    
+    ipcRenderer.on('clear', () => {
+        players = [];
+        numplayers = 0;
+        changed = true;
+        updateArray();
     });
 
     $('#badlion').on('click', {client: 'badlion'}, main);
