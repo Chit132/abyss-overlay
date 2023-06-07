@@ -576,7 +576,8 @@ function main(event){
 
     if (!fs.existsSync(logpath)) {
         goodfile = false;
-        return ModalWindow.open({ title: 'Client chat logs file not found', content: 'The chat logs file for your selected client was not found! You can set it manually if you know where it is using the "Select log file" button in settings. Overlay will not work unless the correct chat logs file is found.', type: -1 })
+        ModalWindow.open({ title: 'Client chat logs not found', content: `The chat logs file for ${Clients.displayNames[chosen[0]]} client was not found! You can set it manually if you know where it is using the "Select log file" button in settings. Overlay will not work unless the correct chat logs file is found.`, type: -1 })
+        return detected;
     }
 
     verifyKey();
@@ -836,13 +837,13 @@ $(() => {
     }
 
     if (config.get('settings.client', -1) !== -1) {
-        let tevent = {data: {client: config.get('settings.client')}};
-        let detectedClient = main(tevent);
+        const tevent = {data: {client: config.get('settings.client')}};
+        const detectedClient = main(tevent);
         
-        if (detectedClient[0] !== tevent.data.client) {
+        if (detectedClient && detectedClient[0] !== tevent.data.client) {
             ModalWindow.open({
                 title: 'New active client detected!',
-                content: `A more recently used client has been detected: ${Clients.displayNames[detectedClient[0]]}. <br>
+                content: `A more recently used client has been detected: <strong>${Clients.displayNames[detectedClient[0]]}</strong>. <br>
                             The overlay is currently focused on client: ${Clients.displayNames[tevent.data.client]}. <br><br>
                             If you are using a different client than ${Clients.displayNames[tevent.data.client]}, then go to overlay settings and click "Select Client"`,
                 type: -2
@@ -1301,13 +1302,13 @@ $(() => {
     $('#lunar').on('click', {client: 'lunar'}, main);
     $('#vanilla').on('click', {client: 'vanilla'}, main);
     $('#pvplounge').on('click', {client: 'pvplounge'}, main);
-    $('#feather').on('click', {client: 'feather'}, main);
+    $('#labymod').on('click', {client: 'labymod'}, main);
     $('#feather').on('click', {client: 'feather'}, main);
     $('#badlion').on('click', () => {config.set('settings.client', 'badlion')});
     $('#lunar').on('click', () => {config.set('settings.client', 'lunar')});
     $('#vanilla').on('click', () => {config.set('settings.client', 'vanilla')});
     $('#pvplounge').on('click', () => {config.set('settings.client', 'pvplounge')});
-    $('#feather').on('click', () => {config.set('settings.client', 'feather')});
+    $('#labymod').on('click', () => {config.set('settings.client', 'labymod')});
     $('#feather').on('click', () => {config.set('settings.client', 'feather')});
 
     let hoverTimer = -1;

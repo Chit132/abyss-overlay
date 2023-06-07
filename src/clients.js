@@ -68,11 +68,10 @@ class Clients {
 
         for (const client in this.paths) {
             if (fs.existsSync(this.paths[client])) {
-                let mtime = fs.statSync(this.paths[client]).mtime;
+                const mtime = fs.statSync(this.paths[client]).mtime;
                 if (mtime > max.time) {
                     max = {
                         client: client,
-                        path: this.paths[client],
                         time: mtime
                     }
                 }
