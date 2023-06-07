@@ -344,31 +344,27 @@ function playerAJAX(uuid, ign, e, guild = ''){
     }});
 }
 
-function addPlayer(ign = '', e = 0){
+function addPlayer(ign = '', e = 0) {
     let uuid = '';
     console.log(`Adding player: ${ign}`);
     $.ajax({type: 'GET', async: true, url: mojang+ign, success: (data, status) => {
         if (status === 'success'){
             uuid = data.id; ign = data.name;
-            if (guildtag){
+            if (guildtag) {
                 let guild = '';
-                $.ajax({type: 'GET', async: true, url: `https://api.hypixel.net/findGuild?key=${key}&byUuid=${uuid}`, success: (data) => {
-                    if (data.success === true && data.guild){
-                        $.ajax({type: 'GET', async: true, url: `https://api.hypixel.net/guild?key=${key}&id=${data.guild}`, success: (data) => {
-                            if (data.success === true && data.guild){
-                                if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
-                            }
-                            playerAJAX(uuid, ign, e, guild);
-                        }, error: () => {
-                            playerAJAX(uuid, ign, e, guild);
-                        }});
+                $.ajax({type: 'GET', async: true, url: `https://api.hypixel.net/guild?key=${key}&player=${uuid}`, success: (data) => {
+                    if (data.success === true && data.guild) {
+                        if (data.success === true && data.guild){
+                            if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
+                        }
+                        playerAJAX(uuid, ign, e, guild);
                     }
                     else playerAJAX(uuid, ign, e, guild);
                 }, error: () => {
                     playerAJAX(uuid, ign, e, guild);
                 }});
             }
-            else{
+            else {
                 playerAJAX(uuid, ign, e);
             }
         } else {
