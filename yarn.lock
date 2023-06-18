@@ -65,18 +65,6 @@
     minimatch "^3.0.4"
     plist "^3.0.4"
 
-"@kwsites/file-exists@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@kwsites/file-exists/-/file-exists-1.1.1.tgz#ad1efcac13e1987d8dbaf235ef3be5b0d96faa99"
-  integrity sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==
-  dependencies:
-    debug "^4.1.1"
-
-"@kwsites/promise-deferred@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@kwsites/promise-deferred/-/promise-deferred-1.1.1.tgz#8ace5259254426ccef57f3175bc64ed7095ed919"
-  integrity sha512-GaHYm+c0O9MjZRu0ongGBRbinu8gVAMd2UZjji6jVmqKtZluZnptXGWhz1E8j8D2HJ3f/yMxKAUC0b+57wncIw==
-
 "@malept/cross-spawn-promise@^1.1.0":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@malept/cross-spawn-promise/-/cross-spawn-promise-1.1.1.tgz#504af200af6b98e198bce768bc1730c6936ae01d"
@@ -283,11 +271,6 @@ app-builder-lib@22.14.13:
     semver "^7.3.5"
     temp-file "^3.4.0"
 
-app-root-path@^3.0.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/app-root-path/-/app-root-path-3.1.0.tgz#5971a2fc12ba170369a7a1ef018c71e6e47c2e86"
-  integrity sha512-biN3PwB2gUtjaYy/isrU3aNWI5w+fAfvHkSvCKeQGxhmYpwKFUxudR3Yya+KqVRHBmEDYh+/lTozYCFbmzX4nA==
-
 argparse@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/argparse/-/argparse-2.0.1.tgz#246f50f3ca78a3240f6c997e8a9bd1eac49e4b38"
@@ -339,16 +322,6 @@ author-regex@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/author-regex/-/author-regex-1.0.0.tgz#d08885be6b9bbf9439fe087c76287245f0a81450"
   integrity sha512-KbWgR8wOYRAPekEmMXrYYdc7BRyhn2Ftk7KWfMUnQ43hFdojWEFRxhhRUm3/OFEdPa1r0KAvTTg9YQK57xTe0g==
-
-auto-git-update@^2.0.1:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/auto-git-update/-/auto-git-update-2.1.2.tgz#43402d317c808c7a36d21c3e41c78d1e829b3604"
-  integrity sha512-JsWxJGwAZbo38cwljbo1ivvNyrvi+rZOOswLfGwPihHY+7NvnyWJ3JGJISqIOv7V9yQFDt/Juk5Jv3OhuwHBkw==
-  dependencies:
-    app-root-path "^3.0.0"
-    chegs-simple-logger "^1.1.0"
-    fs-extra "^8.1.0"
-    simple-git "^3.0.0"
 
 balanced-match@^1.0.0:
   version "1.0.2"
@@ -535,13 +508,6 @@ chalk@^4.0.2, chalk@^4.1.0, chalk@^4.1.1:
   dependencies:
     ansi-styles "^4.1.0"
     supports-color "^7.1.0"
-
-chegs-simple-logger@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/chegs-simple-logger/-/chegs-simple-logger-1.1.0.tgz#65d628e548a8c0c753f26b314e953688d2b9f1a9"
-  integrity sha512-GR7VaKpWw3oAQV9vmjQdNlIVjxCmx15dQpj9b4m9IrGDg4unKykx74pGp8taOxnFEIU0/uqi9XGy5CHNuYwfcA==
-  dependencies:
-    rotating-file-stream "^1.4.2"
 
 chokidar@^3.5.0:
   version "3.5.3"
@@ -2199,11 +2165,6 @@ roarr@^2.15.3, roarr@^2.15.4:
     semver-compare "^1.0.0"
     sprintf-js "^1.1.2"
 
-rotating-file-stream@^1.4.2:
-  version "1.4.6"
-  resolved "https://registry.yarnpkg.com/rotating-file-stream/-/rotating-file-stream-1.4.6.tgz#42725b951835f6c3b5c16f8f6126e65758ef1d61"
-  integrity sha512-QS7vGxBK6sGc1mCqlmAuwV4J0fmmVCKaUgMvKbkTueZr4jdkXN3bSpTEOQxtdtAVEzi1aUqdHzwIQ0ejNn+CQg==
-
 rxjs@^7.5.2:
   version "7.8.1"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.8.1.tgz#6f6f3d99ea8044291efd92e7c7fcf562c4057543"
@@ -2290,15 +2251,6 @@ signal-exit@^3.0.2:
   version "3.0.7"
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.7.tgz#a9a1767f8af84155114eaabd73f99273c8f59ad9"
   integrity sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==
-
-simple-git@^3.0.0:
-  version "3.18.0"
-  resolved "https://registry.yarnpkg.com/simple-git/-/simple-git-3.18.0.tgz#2e25adbbc1e3df5ee97c0f1b468ddadf3f0f9adf"
-  integrity sha512-Yt0GJ5aYrpPci3JyrYcsPz8Xc05Hi4JPSOb+Sgn/BmPX35fn/6Fp9Mef8eMBCrL2siY5w4j49TA5Q+bxPpri1Q==
-  dependencies:
-    "@kwsites/file-exists" "^1.1.1"
-    "@kwsites/promise-deferred" "^1.1.1"
-    debug "^4.3.4"
 
 slice-ansi@^3.0.0:
   version "3.0.0"

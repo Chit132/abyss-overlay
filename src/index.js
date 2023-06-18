@@ -9,7 +9,6 @@ const path = require('path');
 const Pickr = require('@simonwep/pickr');
 const DiscordRPC = require('discord-rpc');
 const rpc = new DiscordRPC.Client({transport: 'ipc'});
-const AutoGitUpdate = require('auto-git-update');
 const packageJSON = require('../package.json');
 const electron_log = require('electron-log'); electron_log.catchErrors({ showDialog: true }); Object.assign(console, electron_log.functions);
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
@@ -46,26 +45,26 @@ function updateTags(){
 updateTags();
 setInterval(updateTags, 900000);
 
-const updater = new AutoGitUpdate({repository: 'https://github.com/Chit132/abyss-overlay', tempLocation: homedir});
 async function versionCompare(){
-    try{
-        const versions = await updater.compareVersions();
-        return versions.upToDate;
-    }
-    catch{return false;}
+    try {
+        await fetch('https://raw.githubusercontent.com/Chit132/abyss-overlay/master/package.json')
+            .then(r => r.json())
+            .then(remotePackage => {
+                if (remotePackage.version !== packageJSON.version) {
+                    $('#update').css('display', 'inline-block');
+                    const updatenotif = new Notification({
+                        title: 'UPDATE AVAILABLE!',
+                        body: 'To update, join the Discord, click on the update button, or click on this notification!',
+                        icon: path.join(__dirname, '../assets/logo.ico')
+                    });
+                    updatenotif.on('click', () => {shell.openExternal('https://discord.gg/7dexcJTyCJ'); shell.openExternal('https://github.com/Chit132/abyss-overlay/releases/latest');});
+                    if (app.isPackaged) updatenotif.show();
+                }
+            });
+    } catch {console.error('Cannot read remote version');}
 }
-versionCompare().then((uptodate) => {
-    if (!uptodate){
-        $('#update').css('display', 'inline-block');
-        const updatenotif = new Notification({
-            title: 'UPDATE AVAILABLE!',
-            body: 'To update, join the Discord, click on the update button, or click on this notification!',
-            icon: path.join(__dirname, '../assets/logo.ico')
-        });
-        updatenotif.on('click', () => {shell.openExternal('https://discord.gg/7dexcJTyCJ'); shell.openExternal('https://github.com/Chit132/abyss-overlay/releases/latest');});
-        if (app.isPackaged) updatenotif.show();
-    }
-});
+versionCompare();
+
 
 function verifyKey($apiElement = false) {
     $.ajax({type: 'GET', async: false, url: 'https://api.hypixel.net/key?key='+key, success: (data) => {
