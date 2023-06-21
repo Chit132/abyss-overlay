@@ -27,11 +27,14 @@ const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsCol
 const { ModalWindow } = require('./modalWindow.js');
 const { PopupStats } = require('./popupStats.js');
 const { Clients } = require('./clients.js');
+const { verify } = require('crypto');
+const { first, initial } = require('lodash');
 
 
 config.delete('players');
+const HY_API = 'https://api.hypixel.net', HY_HEADER = { 'API-Key': config.get('key', '1') };
 const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
-var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+var players = [], numplayers = 0, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = '', useruuid = config.get('uuid', undefined), sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
 function updateTags(){
@@ -45,7 +48,7 @@ function updateTags(){
 updateTags();
 setInterval(updateTags, 900000);
 
-async function versionCompare(){
+async function versionCompare() {
     try {
         await fetch('https://raw.githubusercontent.com/Chit132/abyss-overlay/master/package.json')
             .then(r => r.json())
@@ -65,38 +68,70 @@ async function versionCompare(){
 }
 versionCompare();
 
-
 function verifyKey($apiElement = false) {
-    $.ajax({type: 'GET', async: false, url: 'https://api.hypixel.net/key?key='+key, success: (data) => {
-        if (data.success === true) {
-            goodkey = true;
-            apilink = `https://api.hypixel.net/player?key=${key}&uuid=`;
-            config.set('key', key);
-            useruuid = data.record.owner.replaceAll('-', '');
-            $.ajax({type: 'GET', async: false, url: 'https://sessionserver.mojang.com/session/minecraft/profile/' + data.record.owner, success: (profile) => {user = profile.name;}});
-            $.ajax({type: 'GET', async: false, url: apilink+useruuid, success: (data) => {
-                if (data.success === true && data.player !== null){
-                    startapi = data.player;
-                    starttime = new Date();
-                }
-            }});
-            $('#api_key').val(key);
-            if ($apiElement) {
-                ModalWindow.open({ title: 'API Key Accepted!', type: 1 });
-                $apiElement.css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 6px white', 'color': 'transparent'} );
-            }
-        } else goodkey = false;
+    $.ajax({type: 'GET', async: false, url: `${HY_API}/punishmentstats`, headers: HY_HEADER, success: (data) => {
+        if (!data.success) return goodkey = false;
+        goodkey = true;
+        config.set('key', HY_HEADER['API-Key']);
+        if ($apiElement) {
+            $apiElement.val(HY_HEADER['API-Key']);
+            ModalWindow.open({ title: 'API Key Accepted', type: 1, content: "You're good to go!" });
+            $apiElement.css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 8px white', 'color': 'transparent'} );
+            if (useruuid) initialStats(useruuid);
+        }
     }, error: (jqXHR) => {
         if (jqXHR.status === 0) apiDown = true;
-        goodkey = false;
-        if ($apiElement) {
-            $apiElement.val('');
-            $apiElement.css({ 'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' });
-            if (jqXHR.status !== 0) ModalWindow.open({ title: 'Invalid API Key', content: 'The entered API key is either invalid or it expired! Generate a new one using command "<b>/api new</b>" on Hypixel.', type: -1 });
+        else if (jqXHR.status == 403) {
+            goodkey = false;
+            if ($apiElement) {
+                $apiElement.val('');
+                $apiElement.css({ 'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' });
+                if (jqXHR.status !== 0) ModalWindow.open({ title: 'Invalid API Key', content: 'The entered API key is either invalid or it likely expired! Generate a new one on the Hypixel Developer Dashboard website and paste it here.', type: -1 });
+            }
         }
         updateArray();
     }});
     updateHTML();
+}
+function clipboardKey($apiElement = false) {
+    let copied = clipboard.readText();
+    if (copied) copied = copied.replace(/\s/g, '');
+    if (copied.length !== 36) return ModalWindow.open({ title: 'Invalid API key', content: 'What you have copied is not an API key! Make sure you have copied the correct Hypixel API key! Generate a new one on the Hypixel Developer Dashboard website and paste it here.', type: -1 });
+    HY_HEADER['API-Key'] = copied;
+    verifyKey($apiElement);
+}
+
+function initialStats(uuid) {
+    $.ajax({type: 'GET', async: false, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
+        if (data.success === true && data.player !== null){
+            startapi = data.player;
+            starttime = new Date();
+        }
+    }});
+}
+function verifyUUID(uuid = null) {
+    if (!uuid && useruuid) {
+        uuid = useruuid;
+    }
+    if (uuid) {
+        $.ajax({type: 'GET', async: false, url: `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`, success: (profile) => {
+            user = profile.name;
+            initialStats(uuid);
+        }});
+    }
+}
+function verifyIGN(ign, $apiElement) {
+    $.ajax({type: 'GET', async: false, url: `https://api.mojang.com/users/profiles/minecraft/${ign}`, headers: HY_HEADER, success: (data) => {
+        user = data.name;
+        useruuid = data.id;
+        config.set('uuid', useruuid);
+        ModalWindow.open({ title: 'IGN successfully verified!', type: 1 });
+        $apiElement.val(user);
+        $apiElement.css( { 'border-color': '#b9b9b9' } );
+        verifyUUID(useruuid);
+    }, error: (jqXHR) => {
+        if (jqXHR.status === 404) ModalWindow.open({ title: 'Invalid IGN', type: -1, content: `The IGN you typed does not exist!<br>You typed: <b>${ign}</b>` });
+    }});
 }
 
 function updateHTML(){
@@ -111,11 +146,45 @@ function updateHTML(){
             class: -2
         });
     }
-    else if (!goodkey) {namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">RUN COMMAND "/api new"</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">OR ENTER IT IN SETTINGS</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
+    else if (!goodkey) {
+        let modalOpened = false;
+        if (HY_HEADER['API-Key'] === '1') {
+            modalOpened = ModalWindow.open({ title: "Let's Get Started!", class: -4,
+                content: `
+                    The overlay requires a <b>Hypixel API key</b> to fetch player stats.<br>
+                    <ul>
+                        <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
+                        <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
+                    </ul>
+                    <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">
+                    <ul>
+                        <li style="height: auto">Also consider providing your IGN in settings for access to more features!</li>
+                    </ul>`
+            });
+        } else {
+            modalOpened = ModalWindow.open({ title: 'Expired API Key', class: -4, type: -1,
+                content: `Your current API key has <b>expired!</b><br>
+                    <ul>
+                        <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
+                        <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
+                    </ul>
+                    <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">`
+            });
+        }
+        if (modalOpened) {
+            $('#hy-dev-portal').on('click', () => {shell.openExternal('https://developer.hypixel.net/dashboard');});
+            $('#api-key-guide').on('click', () => {shell.openExternal('https://github.com/Chit132/abyss-overlay/wiki/Hypixel-API-Keys-Guide');});
+            $('#modal_api_key').on('click', function() {
+                clipboardKey($(this));
+                if (goodkey) $(this).parent().parent().parent().remove();
+            });
+        }
+        else namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">ENTER NEW KEY IN SETTINGS</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';
+    }
     else if (keyThrottle) {
         ModalWindow.open({
             title: 'Hypixel API Key Throttle',
-            content: 'You are looking up too many players too quickly! Hypixel has ratelimited your API key for around 1 minute. Try not to search for too many players too quickly: ~60 players per minute max',
+            content: 'You are looking up too many players too quickly! Hypixel has ratelimited your API key for a few minutes. Try not to search for too many players too quickly: ~300 players every 5 minutes max',
             type: -1,
             class: -1
         });
@@ -242,7 +311,7 @@ function updateArray(){
 
 function playerAJAX(uuid, ign, e, guild = ''){
     let api = '', got = false;
-    $.ajax({type: 'GET', async: true, url: apilink+uuid, success: (data) => {
+    $.ajax({type: 'GET', async: true, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
         keyThrottle = false; apiDown = false; ModalWindow.keyThrottle = false; ModalWindow.APIdown = false;
         if (data.success === true && data.player !== null){
             let tswlvl = -1, tdwins = -1;
@@ -351,7 +420,7 @@ function addPlayer(ign = '', e = 0) {
             uuid = data.id; ign = data.name;
             if (guildtag) {
                 let guild = '';
-                $.ajax({type: 'GET', async: true, url: `https://api.hypixel.net/guild?key=${key}&player=${uuid}`, success: (data) => {
+                $.ajax({type: 'GET', async: true, url: `${HY_API}/guild?player=${uuid}`, headers: HY_HEADER, success: (data) => {
                     if (data.success === true && data.guild) {
                         if (data.success === true && data.guild){
                             if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
@@ -543,11 +612,11 @@ function autowho(){
 }
 ipcRenderer.on('autowho-err', () => {
     config.set('settings.autowho', false);
-    new Notification({
+    ModalWindow.open({
         title: 'Autowho error',
-        body: 'Autowho was turned off because it could not be run on your PC. Java v8 or above is required! Check logs for more info',
-        icon: path.join(__dirname, '../assets/logo.ico')
-    }).show();
+        content: 'Autowho was turned off because it failed to run on your PC. Java v8 or above is required! Check logs for more info',
+        type: -2
+    });
 });
 
 function main(event){
@@ -576,6 +645,7 @@ function main(event){
     }
 
     verifyKey();
+    verifyUUID();
 
     const tail = new Tail(logpath, {/*logger: con, */useWatchFile: true, nLines: 1, fsWatchOptions: {interval: 100}});
     tail.on('line', (data) => {
@@ -710,7 +780,7 @@ function main(event){
             }
             else if ((msg.indexOf('reconnected') !== -1) && msg.indexOf(':') === -1) sent = false;
             else if (msg.indexOf('The game starts in 1 second!') !== -1 && msg.indexOf(':') === -1){if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, Math.round(zoom*35), true); $('#show').css('transform', 'rotate(90deg)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none');} gameStartNotif();}
-            else if (msg.indexOf('new API key') !== -1 && msg.indexOf(':') === -1){key = msg.substring(msg.indexOf('is ')+3); config.set('key', key); apilink = `https://api.hypixel.net/player?key=${key}&uuid=`; goodkey = true; verifyKey($('#api_key')); updateHTML();}
+            else if (msg.indexOf('legacy API keys') !== -1 && msg.indexOf(':') === -1) ModalWindow.open({ title: 'Hypixel API changes', type: -2, content: 'You can no longer generate a Hypixel API key through chat. Head to the Hypixel Developer Dashboard website to generate a new one and paste it in overlay settings'});
             else if (msg.indexOf('Guild Name: ') === 0 && inlobby){
                 guildlist = true; guildtag = false;
                 if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, winheight, true); $('#show').css('transform', 'rotate(0deg)');}
@@ -872,6 +942,9 @@ $(() => {
         $('h1').css({'background': '-webkit-linear-gradient(rgb(153, 0, 255), rgb(212, 0, 255))', 'background-clip': 'text', '-webkit-background-clip': 'text', '-webkit-text-fill-color': 'transparent'});
         $('.tabsbuttons').css({'-webkit-filter': '', 'filter': ''});
     }
+    $('#logo_title').on('click', () => {
+        $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#settingsdiv').css('display', 'none'); $('#indexdiv').css('display', 'block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none');
+    });
     $('#discord').on('click', () => {shell.openExternal('https://discord.gg/7dexcJTyCJ');});
     $('#info').on('click', () => {
         if ($('#infodiv').css('display') === 'none'){
@@ -884,6 +957,10 @@ $(() => {
     $('#music').on('click', () => {
         if ($('#musicdiv').css('display') === 'none'){
             $('#music').css('background-image', 'url(../assets/music2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#musicdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#settingsdiv').css('display', 'none'); $('#startmusic').css('display', 'inline-block'); $('#unlinked').css('display', 'none'); $('#nomusicbots').css('display', 'none');
+            if (!useruuid) {
+                ModalWindow.open({ title: 'Missing username', type: -2, content: 'The music party feature is <b>NOT available</b> without your Minecraft username! <ul><li style="height: auto">Enter your IGN in overlay settings</li></ul><b>NOTE:</b> must be the same account you have linked with the bot in the Abyss Overlay Discord server.' });
+                $('#startmusic').css('display', 'none');
+            }
         }
         else{
             $('#music').css('background-image', 'url(../assets/music1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#settingsdiv').css('display', 'none');
@@ -891,7 +968,7 @@ $(() => {
     });
     $('#settings').on('click', () => {
         if ($('#settingsdiv').css('display') === 'none'){
-            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', false)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); $('#whobtn').prop('checked', config.get('settings.autowho', false));
+            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', true)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); $('#whobtn').prop('checked', config.get('settings.autowho', false));
             let tgmode = config.get('settings.bwgmode', ''), tgamemode = config.get('settings.gamemode', 0), trpc = config.get('settings.rpc_stats', 1);
             if (tgmode === '' || tgmode === undefined){$('#overall').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Overall');}
             else if (tgmode === 'eight_one_'){$('#solos').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Solos');}
@@ -905,12 +982,18 @@ $(() => {
             else if (trpc === 2){$('#rpcOverall').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Overall stats');}
             else if (trpc === 0){$('#rpcNo').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Hide Stats');}
             if (goodkey) {
-                $('#api_key').css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 6px white', 'color': 'transparent'} );
-                $('#api_key').val(key);
+                $('#api_key').css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 8px white', 'color': 'transparent' } );
+                $('#api_key').val(HY_HEADER['API-Key']);
             } else {
                 $('#api_key').css( {'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' } );
                 $('#api_key').val('');
             }
+            if (user) {
+                $('#ign_input').css( { 'border-color': '#b9b9b9' } );
+            } else {
+                $('#ign_input').css( {'border-color': '#8f0000' } );
+            }
+            $('#ign_input').val(user);
         }
         else{
             $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#settingsdiv').css('display', 'none'); $('#indexdiv').css('display', 'block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none');
@@ -945,16 +1028,6 @@ $(() => {
     $('#changelogClose').on('click', () => {$('#changelog').css('display', 'none'); config.set('changelog', packageJSON.version);});
 
     //TESTING AREA
-
-    // $('#pp').on('click', () => {
-    //     addPlayer('OhChit');
-    // });
-
-    // $('#pp').on('click', () => {
-    //     let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
-    //     //let igns = ['Manhal_IQ_', 'xLectroLiqhtnin', 'Opmine', 'ameeero', 'Feitii', 'tqrm', 'Lioness_Rising', 'TTTTTTIAmLAG_OMG', 'gamerboy80', 'cocoasann', 'SHADjust_', 'Beatr', 'Pairel', 'poopoosnake75', 'OhChit'];
-    //     for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
-    // });
 
     // $('#pp').on('click', () => {
     //     let thtml = '', tnhtml = '', twhtml = '';
@@ -1113,14 +1186,42 @@ $(() => {
     });
     $('#api_key').on('click', function() {
         if (goodkey && $(this).val().length === 36) {
-            clipboard.writeText(key);
+            clipboard.writeText(HY_HEADER['API-Key']);
             return ModalWindow.open({ title: 'API Key Copied to Clipboard' });
         }
-        let copied = clipboard.readText();
-        if (copied) copied = copied.replace(/\s/g, '');
-        if (copied.length !== 36) return ModalWindow.open({ title: 'Invalid API key', content: 'Make sure you have copied the correct Hypixel API key! Generate a new one using command "<b>/api new</b>" on Hypixel.', type: -1 });
-        key = copied;
-        verifyKey($(this));
+        clipboardKey($(this));
+    });
+    $('#revert_api-key').on('click', function() {
+        ModalWindow.invalidKey = false;
+        ModalWindow.open({ title: "API Key Successfully Reset!", class: -4,
+            content: `
+                You have <b>removed</b> your Hypixel API Key from the overlay! The overlay requires an API key to operate.
+                <ul>
+                    <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
+                    <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
+                </ul>
+                <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">
+            `
+        });
+        goodkey = false;
+        config.delete('key');
+        HY_HEADER['API-Key'] = '1';
+        $('#hy-dev-portal').on('click', () => {shell.openExternal('https://developer.hypixel.net/dashboard');});
+        $('#api-key-guide').on('click', () => {shell.openExternal('https://github.com/Chit132/abyss-overlay/wiki/Hypixel-API-Keys-Guide');});
+        $('#modal_api_key').on('click', function() {
+            clipboardKey($('#api-key'));
+            if (goodkey) {
+                $(this).parent().parent().parent().remove();
+                ModalWindow.invalidKey = false;
+            }
+        });
+    });
+    $('#ign_input').on('click', () => { ipcRenderer.send('focus', true); });
+    $('#ign_input').on('focusout', function() {
+        ipcRenderer.send('focus', false);
+        if ($(this).val().length > 0) {
+            verifyIGN($(this).val(), $(this));
+        }
     });
     $('#changeclient').on('click', () => {
         config.delete('players'); config.set('settings.pos', currentWindow.getPosition()); config.set('settings.size', [currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, currentWindow.webContents.getOwnerBrowserWindow().getBounds().height]);
@@ -1357,7 +1458,7 @@ $(() => {
 
     function updateSession(startapi, e = 0){
         let sessionHTML = '', startplayer = startapi;
-        $.ajax({type: 'GET', async: false, url: apilink+useruuid, success: (data) => {
+        $.ajax({type: 'GET', url: `${HY_API}/player?uuid=${useruuid}`, headers: HY_HEADER, success: (data) => {
             try{
                 $('#sessionavatar').attr('src', `https://crafatar.com/avatars/${useruuid}?size=100&default=MHF_Steve&overlay`);
                 if (data.success === true && data.player !== null){
@@ -1465,6 +1566,9 @@ $(() => {
         if ($('#sessiondiv').css('display') === 'none'){
             updateSession(startapi);
             $('#session').css('background-image', 'url(../assets/session2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'inline-block'); $('#settingsdiv').css('display', 'none');
+            if (!useruuid) {
+                ModalWindow.open({ title: 'Missing username', type: -2, content: 'The session stats feature is <b>NOT available</b> without your Minecraft username! <ul><li style="height: auto">Enter your IGN in overlay settings</li></ul>' });
+            }
         }
         else{
             $('#session').css('background-image', 'url(../assets/session1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block'); $('#sessiondiv').css('display', 'none'); $('#settingsdiv').css('display', 'none');

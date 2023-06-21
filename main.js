@@ -183,6 +183,11 @@ ipcMain.on('autowho', (event) => {
 
 ipcMain.on('focus', (event, focusable) => {
     win.setFocusable(focusable);
+    if (focusable) win.focus();
+    else {
+        win.blur();
+        setTimeout(() => win.setSkipTaskbar(false), 100);
+    }
 });
 
 ipcMain.on('setKeybind', (event, bind, keybind) => {
