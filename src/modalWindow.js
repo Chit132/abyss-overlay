@@ -4,6 +4,7 @@ const ModalWindow = {
     keyThrottle: false,
     APIdown: false,
     DBdown: false,
+    invalidKey: false,
 
     getHTML: function(HTMLoptions) {
         return `
@@ -12,7 +13,7 @@ const ModalWindow = {
                 <div class="modal_titlebar" style="background: ${HTMLoptions.colors.background}">
                     <span class="modal_icon material-icons" style="color: ${HTMLoptions.colors.title}">${HTMLoptions.icon}</span>
                     <span class="modal_title" style="color: ${HTMLoptions.colors.title}">${HTMLoptions.title}</span>
-                    <p class="modal_close material-icons">close</p>
+                    ${HTMLoptions.block ? '' : '<p class="modal_close material-icons">close</p>'}
                 </div>
                 <div class="modal_content" style="${HTMLoptions.hasContent}">${HTMLoptions.content}</div>
             </div>
@@ -47,33 +48,37 @@ const ModalWindow = {
             options.icon = 'info';
         }
         if (options.class === -1) {
-            if (this.keyThrottle) {
-                return;
-            }
+            if (this.keyThrottle) return;
             options.class = 'err-key-throttle';
             this.keyThrottle = true;
         } else if (options.class === -2) {
-            if (this.APIdown) {
-                return;
-            }
+            if (this.APIdown) return;
             options.class = 'err-api-down';
             this.APIdown = true;
         } else if (options.class === -3) {
-            if (this.DBdown) {
-                return;
-            }
+            if (this.DBdown) return;
             options.class = 'err-db-down';
             this.DBdown = true;
+        } else if (options.class === -4) {
+            if (this.invalidKey) return;
+            options.class = 'err-invalid-key';
+            options.block = true;
+            this.invalidKey = true;
         } else {
             options.class = '';
+        }
+        if (options?.focused){
+            options.class += ' focused';
         }
         options = Object.assign({
             title: 'Modal window',
             content: 'Hello! Umm this should not have showed up. Ignore it please <3',
-            hasContent: !options.content ? 'display: none' : ''
+            hasContent: !options.content ? 'display: none' : '',
+            block: false
         }, options);
 
         $(document.body).append(this.getHTML(options));
+        return true;
     },
 
     close: function() {

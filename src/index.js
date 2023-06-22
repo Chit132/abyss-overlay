@@ -9,7 +9,6 @@ const path = require('path');
 const Pickr = require('@simonwep/pickr');
 const DiscordRPC = require('discord-rpc');
 const rpc = new DiscordRPC.Client({transport: 'ipc'});
-const AutoGitUpdate = require('auto-git-update');
 const packageJSON = require('../package.json');
 const electron_log = require('electron-log'); electron_log.catchErrors({ showDialog: true }); Object.assign(console, electron_log.functions);
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
@@ -27,13 +26,16 @@ const config = require('electron-json-config');
 const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsColor, winsColor, getTag, NWL, swLVL, HypixelColors } = require('./helpers.js');
 const { ModalWindow } = require('./modalWindow.js');
 const { PopupStats } = require('./popupStats.js');
+const { Clients } = require('./clients.js');
+const { verify } = require('crypto');
+const { first, initial } = require('lodash');
 
 
 config.delete('players');
+const HY_API = 'https://api.hypixel.net', HY_HEADER = { 'API-Key': config.get('key', '1') };
 const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
-var players = [], numplayers = 0, key = config.get('key', '1'), apilink = `https://api.hypixel.net/player?key=${key}&uuid=`, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = undefined, useruuid = undefined, sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+var players = [], numplayers = 0, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = '', useruuid = config.get('uuid', undefined), sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
-
 
 function updateTags(){
     $.ajax({type: 'GET', async: true, url: `${tagsIP}/gimmeusers`, success: (data) => {
@@ -46,58 +48,90 @@ function updateTags(){
 updateTags();
 setInterval(updateTags, 900000);
 
-const updater = new AutoGitUpdate({repository: 'https://github.com/Chit132/abyss-overlay', tempLocation: homedir});
-async function versionCompare(){
-    try{
-        const versions = await updater.compareVersions();
-        return versions.upToDate;
-    }
-    catch{return false;}
+async function versionCompare() {
+    try {
+        await fetch('https://raw.githubusercontent.com/Chit132/abyss-overlay/master/package.json')
+            .then(r => r.json())
+            .then(remotePackage => {
+                if (remotePackage.version !== packageJSON.version) {
+                    $('#update').css('display', 'inline-block');
+                    const updatenotif = new Notification({
+                        title: 'UPDATE AVAILABLE!',
+                        body: 'To update, join the Discord, click on the update button, or click on this notification!',
+                        icon: path.join(__dirname, '../assets/logo.ico')
+                    });
+                    updatenotif.on('click', () => {shell.openExternal('https://discord.gg/7dexcJTyCJ'); shell.openExternal('https://github.com/Chit132/abyss-overlay/releases/latest');});
+                    if (app.isPackaged) updatenotif.show();
+                }
+            });
+    } catch {console.error('Cannot read remote version');}
 }
-versionCompare().then((uptodate) => {
-    if (!uptodate){
-        $('#update').css('display', 'inline-block');
-        const updatenotif = new Notification({
-            title: 'UPDATE AVAILABLE!',
-            body: 'To update, join the Discord, click on the update button, or click on this notification!',
-            icon: path.join(__dirname, '../assets/logo.ico')
-        });
-        updatenotif.on('click', () => {shell.openExternal('https://discord.gg/7dexcJTyCJ'); shell.openExternal('https://github.com/Chit132/abyss-overlay/releases/latest');});
-        if (app.isPackaged) updatenotif.show();
-    }
-});
+versionCompare();
 
 function verifyKey($apiElement = false) {
-    $.ajax({type: 'GET', async: false, url: 'https://api.hypixel.net/key?key='+key, success: (data) => {
-        if (data.success === true) {
-            goodkey = true;
-            apilink = `https://api.hypixel.net/player?key=${key}&uuid=`;
-            config.set('key', key);
-            useruuid = data.record.owner.replaceAll('-', '');
-            $.ajax({type: 'GET', async: false, url: 'https://sessionserver.mojang.com/session/minecraft/profile/' + data.record.owner, success: (profile) => {user = profile.name;}});
-            $.ajax({type: 'GET', async: false, url: apilink+useruuid, success: (data) => {
-                if (data.success === true && data.player !== null){
-                    startapi = data.player;
-                    starttime = new Date();
-                }
-            }});
-            $('#api_key').val(key);
-            if ($apiElement) {
-                ModalWindow.open({ title: 'API Key Accepted!', type: 1 });
-                $apiElement.css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 6px white', 'color': 'transparent'} );
-            }
-        } else goodkey = false;
+    $.ajax({type: 'GET', async: false, url: `${HY_API}/punishmentstats`, headers: HY_HEADER, success: (data) => {
+        if (!data.success) return goodkey = false;
+        goodkey = true;
+        config.set('key', HY_HEADER['API-Key']);
+        if ($apiElement) {
+            $apiElement.val(HY_HEADER['API-Key']);
+            ModalWindow.open({ title: 'API Key Accepted', type: 1, content: "You're good to go!" });
+            $apiElement.css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 8px white', 'color': 'transparent'} );
+            if (useruuid) initialStats(useruuid);
+        }
     }, error: (jqXHR) => {
         if (jqXHR.status === 0) apiDown = true;
-        goodkey = false;
-        if ($apiElement) {
-            $apiElement.val('');
-            $apiElement.css({ 'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' });
-            if (jqXHR.status !== 0) ModalWindow.open({ title: 'Invalid API Key', content: 'The entered API key is either invalid or it expired! Generate a new one using command "<b>/api new</b>" on Hypixel.', type: -1 });
+        else if (jqXHR.status == 403) {
+            goodkey = false;
+            if ($apiElement) {
+                $apiElement.val('');
+                $apiElement.css({ 'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' });
+                if (jqXHR.status !== 0) ModalWindow.open({ title: 'Invalid API Key', content: 'The entered API key is either invalid or it likely expired! Generate a new one on the Hypixel Developer Dashboard website and paste it here.', type: -1 });
+            }
         }
         updateArray();
     }});
     updateHTML();
+}
+function clipboardKey($apiElement = false) {
+    let copied = clipboard.readText();
+    if (copied) copied = copied.replace(/\s/g, '');
+    if (copied.length !== 36) return ModalWindow.open({ title: 'Invalid API key', content: 'What you have copied is not an API key! Make sure you have copied the correct Hypixel API key! Generate a new one on the Hypixel Developer Dashboard website and paste it here.', type: -1 });
+    HY_HEADER['API-Key'] = copied;
+    verifyKey($apiElement);
+}
+
+function initialStats(uuid) {
+    $.ajax({type: 'GET', async: false, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
+        if (data.success === true && data.player !== null){
+            startapi = data.player;
+            starttime = new Date();
+        }
+    }});
+}
+function verifyUUID(uuid = null) {
+    if (!uuid && useruuid) {
+        uuid = useruuid;
+    }
+    if (uuid) {
+        $.ajax({type: 'GET', async: false, url: `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`, success: (profile) => {
+            user = profile.name;
+            initialStats(uuid);
+        }});
+    }
+}
+function verifyIGN(ign, $apiElement) {
+    $.ajax({type: 'GET', async: false, url: `https://api.mojang.com/users/profiles/minecraft/${ign}`, headers: HY_HEADER, success: (data) => {
+        user = data.name;
+        useruuid = data.id;
+        config.set('uuid', useruuid);
+        ModalWindow.open({ title: 'IGN successfully verified!', type: 1 });
+        $apiElement.val(user);
+        $apiElement.css( { 'border-color': '#b9b9b9' } );
+        verifyUUID(useruuid);
+    }, error: (jqXHR) => {
+        if (jqXHR.status === 404) ModalWindow.open({ title: 'Invalid IGN', type: -1, content: `The IGN you typed does not exist!<br>You typed: <b>${ign}</b>` });
+    }});
 }
 
 function updateHTML(){
@@ -112,11 +146,45 @@ function updateHTML(){
             class: -2
         });
     }
-    else if (!goodkey) {namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">RUN COMMAND "/api new"</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">OR ENTER IT IN SETTINGS</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
+    else if (!goodkey) {
+        let modalOpened = false;
+        if (HY_HEADER['API-Key'] === '1') {
+            modalOpened = ModalWindow.open({ title: "Let's Get Started!", class: -4,
+                content: `
+                    The overlay requires a <b>Hypixel API key</b> to fetch player stats.<br>
+                    <ul>
+                        <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
+                        <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
+                    </ul>
+                    <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">
+                    <ul>
+                        <li style="height: auto">Also consider providing your IGN in settings for access to more features!</li>
+                    </ul>`
+            });
+        } else {
+            modalOpened = ModalWindow.open({ title: 'Expired API Key', class: -4, type: -1,
+                content: `Your current API key has <b>expired!</b><br>
+                    <ul>
+                        <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
+                        <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
+                    </ul>
+                    <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">`
+            });
+        }
+        if (modalOpened) {
+            $('#hy-dev-portal').on('click', () => {shell.openExternal('https://developer.hypixel.net/dashboard');});
+            $('#api-key-guide').on('click', () => {shell.openExternal('https://github.com/Chit132/abyss-overlay/wiki/Hypixel-API-Keys-Guide');});
+            $('#modal_api_key').on('click', function() {
+                clipboardKey($(this));
+                if (goodkey) $(this).parent().parent().parent().remove();
+            });
+        }
+        else namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">ENTER NEW KEY IN SETTINGS</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';
+    }
     else if (keyThrottle) {
         ModalWindow.open({
             title: 'Hypixel API Key Throttle',
-            content: 'You are looking up too many players too quickly! Hypixel has ratelimited your API key for around 1 minute. Try not to search for too many players too quickly: ~60 players per minute max',
+            content: 'You are looking up too many players too quickly! Hypixel has ratelimited your API key for a few minutes. Try not to search for too many players too quickly: ~300 players every 5 minutes max',
             type: -1,
             class: -1
         });
@@ -243,7 +311,7 @@ function updateArray(){
 
 function playerAJAX(uuid, ign, e, guild = ''){
     let api = '', got = false;
-    $.ajax({type: 'GET', async: true, url: apilink+uuid, success: (data) => {
+    $.ajax({type: 'GET', async: true, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
         keyThrottle = false; apiDown = false; ModalWindow.keyThrottle = false; ModalWindow.APIdown = false;
         if (data.success === true && data.player !== null){
             let tswlvl = -1, tdwins = -1;
@@ -344,31 +412,27 @@ function playerAJAX(uuid, ign, e, guild = ''){
     }});
 }
 
-function addPlayer(ign = '', e = 0){
+function addPlayer(ign = '', e = 0) {
     let uuid = '';
     console.log(`Adding player: ${ign}`);
     $.ajax({type: 'GET', async: true, url: mojang+ign, success: (data, status) => {
         if (status === 'success'){
             uuid = data.id; ign = data.name;
-            if (guildtag){
+            if (guildtag) {
                 let guild = '';
-                $.ajax({type: 'GET', async: true, url: `https://api.hypixel.net/findGuild?key=${key}&byUuid=${uuid}`, success: (data) => {
-                    if (data.success === true && data.guild){
-                        $.ajax({type: 'GET', async: true, url: `https://api.hypixel.net/guild?key=${key}&id=${data.guild}`, success: (data) => {
-                            if (data.success === true && data.guild){
-                                if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
-                            }
-                            playerAJAX(uuid, ign, e, guild);
-                        }, error: () => {
-                            playerAJAX(uuid, ign, e, guild);
-                        }});
+                $.ajax({type: 'GET', async: true, url: `${HY_API}/guild?player=${uuid}`, headers: HY_HEADER, success: (data) => {
+                    if (data.success === true && data.guild) {
+                        if (data.success === true && data.guild){
+                            if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
+                        }
+                        playerAJAX(uuid, ign, e, guild);
                     }
                     else playerAJAX(uuid, ign, e, guild);
                 }, error: () => {
                     playerAJAX(uuid, ign, e, guild);
                 }});
             }
-            else{
+            else {
                 playerAJAX(uuid, ign, e);
             }
         } else {
@@ -538,7 +602,7 @@ function updateMusic(){
             clearMusic(0, true);
         }
     }, error: () => {
-        clearMusic(1, -1);main
+        clearMusic(1, -1);
         console.log('API ERROR with getMusicSession'); $('#startmusic').css('display', 'none'); dialog.showMessageBox(currentWindow, {title: 'API ERROR!', detail: 'Music API could be down for the moment :( Contact the devs in the Abyss Overlay Discord server please!', type: 'error'});
     }});
 }
@@ -548,54 +612,40 @@ function autowho(){
 }
 ipcRenderer.on('autowho-err', () => {
     config.set('settings.autowho', false);
-    new Notification({
+    ModalWindow.open({
         title: 'Autowho error',
-        body: 'Autowho was turned off because it could not be run on your PC. Java v8 or above is required! Check logs for more info',
-        icon: path.join(__dirname, '../assets/logo.ico')
-    }).show();
+        content: 'Autowho was turned off because it failed to run on your PC. Java v8 or above is required! Check logs for more info',
+        type: -2
+    });
 });
 
 function main(event){
     currentWindow = remote.BrowserWindow.getAllWindows(); currentWindow = currentWindow[0];
-    $('.clientbutton').css('display', 'none'); $('.startup').css('display', 'none'); $('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block'); $('.tabsbuttons').css('display', 'inline-block'); $('#show').css('display', 'inline-block');
 
-    if (event.data.client === 'lunar'){
-        $('#clientimg').attr('src', 'https://img.icons8.com/nolan/2x/lunar-client.png'); $('#clientimg').css({'height': '34px', 'top': '0px'});
-        logpath = config.get('lunarlog', -1);
-        if (logpath === -1) {
-            let log_18 = { path: `${homedir}/.lunarclient/offline/1.8/logs/latest.log`, modified: 0 };
-            let log_189 = { path: `${homedir}/.lunarclient/offline/1.8.9/logs/latest.log`, modified: 0 };
-            let log_multiver = { path: `${homedir}/.lunarclient/offline/multiver/logs/latest.log`, modified: 0 };
-            if (fs.existsSync(log_18.path)) log_18.modified = fs.statSync(log_18.path).mtime;
-            if (fs.existsSync(log_189.path)) log_189.modified = fs.statSync(log_189.path).mtime;
-            if (fs.existsSync(log_multiver.path)) log_multiver.modified = fs.statSync(log_multiver.path).mtime;
-            const modifiedLogs = [ log_18, log_189, log_multiver ];
-            modifiedLogs.sort((a, b) => { return b.modified - a.modified });
-            logpath = modifiedLogs[0].path;
-        }
+    $('.clientbutton').css('display', 'none'); $('.startup').css('display', 'none'); $('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block'); $('.tabsbuttons').css('display', 'inline-block'); $('#show').css('display', 'inline-block');
+    
+    const Client = new Clients(homedir, event.data.client);
+    const detected = Client.autoDetect();
+    const chosen = Client.chosen;
+
+    $('#clientimg').attr('src', Clients.logos[chosen[0]]);
+    if (chosen[0] === 'lunar') $('#clientimg').css({'height': '34px', 'top': '0px'});
+    logpath = chosen[1];
+
+    if (chosen[0] !== detected[0]) {
+        con.log(`New more recent log file found: ${detected[0]}`);
     }
-    else if (process.platform === 'darwin'){
-        if (event.data.client === 'badlion'){logpath = config.get('badlionlog', `${homedir}/Library/Application Support/minecraft/logs/blclient/minecraft/latest.log`); $('#clientimg').attr('src', 'https://www.badlion.net/static/assets/images/logos/badlion-logo.png');}
-        else if (event.data.client === 'vanilla'){logpath = config.get('vanillalog', `${homedir}/Library/Application Support/minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706');}
-        else if (event.data.client === 'pvplounge'){logpath = config.get('pvploungelog', `${homedir}/Library/Application Support/.pvplounge/logs/latest.log`); $('#clientimg').attr('src', 'https://www.saashub.com/images/app/service_logos/158/4d406mrxxaj7/large.png?1601167229');}
-        else if (event.data.client === 'labymod'){logpath = config.get('labymodlog', `${homedir}/Library/Application Support/minecraft/logs/fml-client-latest.log`); $('#clientimg').attr('src', 'https://www.labymod.net/page/tpl/assets/images/logo_web.png');}
-        else if (event.data.client === 'feather'){logpath = config.get('featherlog', `${homedir}/Library/Application Support/minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://i.imgur.com/9ZfHrCw.png');}
-    }
-    else{
-        if (event.data.client === 'badlion'){logpath = config.get('badlionlog', `${homedir}/AppData/Roaming/.minecraft/logs/blclient/minecraft/latest.log`); $('#clientimg').attr('src', 'https://www.badlion.net/static/assets/images/logos/badlion-logo.png');}
-        else if (event.data.client === 'vanilla'){logpath = config.get('vanillalog', `${homedir}/AppData/Roaming/.minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://static.wikia.nocookie.net/minecraft_gamepedia/images/2/2d/Plains_Grass_Block.png/revision/latest?cb=20190525093706');}
-        else if (event.data.client === 'pvplounge'){logpath = config.get('pvploungelog', `${homedir}/AppData/Roaming/.pvplounge/logs/latest.log`); $('#clientimg').attr('src', 'https://www.saashub.com/images/app/service_logos/158/4d406mrxxaj7/large.png?1601167229');}
-        else if (event.data.client === 'labymod'){logpath = config.get('labymodlog', `${homedir}/AppData/Roaming/.minecraft/logs/fml-client-latest.log`); $('#clientimg').attr('src', 'https://www.labymod.net/page/tpl/assets/images/logo_web.png');}
-        else if (event.data.client === 'feather'){logpath = config.get('featherlog', `${homedir}/AppData/Roaming/.minecraft/logs/latest.log`); $('#clientimg').attr('src', 'https://i.imgur.com/9ZfHrCw.png');}
-    }
+
     //con.log(logpath);
 
     if (!fs.existsSync(logpath)) {
         goodfile = false;
-        return ModalWindow.open({ title: 'Client chat logs file not found', content: 'The chat logs file for your selected client was not found! You can set it manually if you know where it is using the "Select log file" button in settings. Overlay will not work unless the correct chat logs file is found.', type: -1 })
+        ModalWindow.open({ title: 'Client chat logs not found', content: `The chat logs file for ${Clients.displayNames[chosen[0]]} client was not found! You can set it manually if you know where it is using the "Select log file" button in settings. Overlay will not work unless the correct chat logs file is found.`, type: -1 })
+        return detected;
     }
 
     verifyKey();
+    verifyUUID();
 
     const tail = new Tail(logpath, {/*logger: con, */useWatchFile: true, nLines: 1, fsWatchOptions: {interval: 100}});
     tail.on('line', (data) => {
@@ -730,7 +780,7 @@ function main(event){
             }
             else if ((msg.indexOf('reconnected') !== -1) && msg.indexOf(':') === -1) sent = false;
             else if (msg.indexOf('The game starts in 1 second!') !== -1 && msg.indexOf(':') === -1){if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, Math.round(zoom*35), true); $('#show').css('transform', 'rotate(90deg)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none');} gameStartNotif();}
-            else if (msg.indexOf('new API key') !== -1 && msg.indexOf(':') === -1){key = msg.substring(msg.indexOf('is ')+3); config.set('key', key); apilink = `https://api.hypixel.net/player?key=${key}&uuid=`; goodkey = true; verifyKey($('#api_key')); updateHTML();}
+            else if (msg.indexOf('legacy API keys') !== -1 && msg.indexOf(':') === -1) ModalWindow.open({ title: 'Hypixel API changes', type: -2, content: 'You can no longer generate a Hypixel API key through chat. Head to the Hypixel Developer Dashboard website to generate a new one and paste it in overlay settings'});
             else if (msg.indexOf('Guild Name: ') === 0 && inlobby){
                 guildlist = true; guildtag = false;
                 if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, winheight, true); $('#show').css('transform', 'rotate(0deg)');}
@@ -746,7 +796,7 @@ function main(event){
                     else addPlayer(tmsgarray[i], 5);
                 }
             }
-            else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', true)}, 10000);}
+            else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', false)}, 10000);}
             else if (music.session === true && msg.indexOf('Party') !== -1 && msg.indexOf('>') !== -1 && msg.indexOf(':') !== -1){
                 // let tign = msg.substring(0, msg.indexOf(':')); tign = tign.substring(tign.lastIndexOf(' ')+1); tign = tign.replace(/[^\w]/g,''); if (tign.substring(tign.length-1) === 'f') tign = tign.substring(0, tign.length-1);
                 // con.log(tign);
@@ -836,6 +886,8 @@ function main(event){
         }
     });
     tail.on('error', (err) => {con.log('error', err); goodfile = false; updateHTML();});
+    
+    return detected;
 }
 
 $(() => {
@@ -849,10 +901,21 @@ $(() => {
         });
     }
 
-    if (config.get('settings.client', -1) !== -1){
-        let tevent = {data: {client: config.get('settings.client')}};
-        main(tevent);
+    if (config.get('settings.client', -1) !== -1) {
+        const tevent = {data: {client: config.get('settings.client')}};
+        const detectedClient = main(tevent);
+        
+        if (detectedClient && detectedClient[0] !== tevent.data.client) {
+            ModalWindow.open({
+                title: 'New active client detected!',
+                content: `A more recently used client has been detected: <strong>${Clients.displayNames[detectedClient[0]]}</strong>. <br>
+                            The overlay is currently focused on client: ${Clients.displayNames[tevent.data.client]}. <br><br>
+                            If you are using a different client than ${Clients.displayNames[tevent.data.client]}, then go to overlay settings and click "Select Client"`,
+                type: -2
+            });
+        }
     }
+
     if (config.get('changelog', undefined) !== packageJSON.version){$('#changelogVersion').html(`Changelog v${packageJSON.version}`); $('#changelog').css('display', 'block');}
 
     currentWindow = remote.BrowserWindow.getAllWindows(); currentWindow = currentWindow[0];
@@ -879,6 +942,9 @@ $(() => {
         $('h1').css({'background': '-webkit-linear-gradient(rgb(153, 0, 255), rgb(212, 0, 255))', 'background-clip': 'text', '-webkit-background-clip': 'text', '-webkit-text-fill-color': 'transparent'});
         $('.tabsbuttons').css({'-webkit-filter': '', 'filter': ''});
     }
+    $('#logo_title').on('click', () => {
+        $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#settingsdiv').css('display', 'none'); $('#indexdiv').css('display', 'block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none');
+    });
     $('#discord').on('click', () => {shell.openExternal('https://discord.gg/7dexcJTyCJ');});
     $('#info').on('click', () => {
         if ($('#infodiv').css('display') === 'none'){
@@ -891,6 +957,10 @@ $(() => {
     $('#music').on('click', () => {
         if ($('#musicdiv').css('display') === 'none'){
             $('#music').css('background-image', 'url(../assets/music2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#musicdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#settingsdiv').css('display', 'none'); $('#startmusic').css('display', 'inline-block'); $('#unlinked').css('display', 'none'); $('#nomusicbots').css('display', 'none');
+            if (!useruuid) {
+                ModalWindow.open({ title: 'Missing username', type: -2, content: 'The music party feature is <b>NOT available</b> without your Minecraft username! <ul><li style="height: auto">Enter your IGN in overlay settings</li></ul><b>NOTE:</b> must be the same account you have linked with the bot in the Abyss Overlay Discord server.' });
+                $('#startmusic').css('display', 'none');
+            }
         }
         else{
             $('#music').css('background-image', 'url(../assets/music1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#settingsdiv').css('display', 'none');
@@ -912,12 +982,18 @@ $(() => {
             else if (trpc === 2){$('#rpcOverall').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Overall stats');}
             else if (trpc === 0){$('#rpcNo').addClass('selected'); $('#rpcStats').find('.custom-select').find('.custom-select_trigger').find('span').html('Hide Stats');}
             if (goodkey) {
-                $('#api_key').css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 6px white', 'color': 'transparent'} );
-                $('#api_key').val(key);
+                $('#api_key').css( { 'border-color': '#b9b9b9', 'text-shadow': '0 0 8px white', 'color': 'transparent' } );
+                $('#api_key').val(HY_HEADER['API-Key']);
             } else {
                 $('#api_key').css( {'border-color': '#8f0000', 'text-shadow': 'none', 'color': 'white' } );
                 $('#api_key').val('');
             }
+            if (user) {
+                $('#ign_input').css( { 'border-color': '#b9b9b9' } );
+            } else {
+                $('#ign_input').css( {'border-color': '#8f0000' } );
+            }
+            $('#ign_input').val(user);
         }
         else{
             $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#settingsdiv').css('display', 'none'); $('#indexdiv').css('display', 'block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none');
@@ -952,16 +1028,6 @@ $(() => {
     $('#changelogClose').on('click', () => {$('#changelog').css('display', 'none'); config.set('changelog', packageJSON.version);});
 
     //TESTING AREA
-
-    // $('#pp').on('click', () => {
-    //     addPlayer('OhChit');
-    // });
-
-    // $('#pp').on('click', () => {
-    //     let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', '69i_love_kids69', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
-    //     //let igns = ['Manhal_IQ_', 'xLectroLiqhtnin', 'Opmine', 'ameeero', 'Feitii', 'tqrm', 'Lioness_Rising', 'TTTTTTIAmLAG_OMG', 'gamerboy80', 'cocoasann', 'SHADjust_', 'Beatr', 'Pairel', 'poopoosnake75', 'OhChit'];
-    //     for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
-    // });
 
     // $('#pp').on('click', () => {
     //     let thtml = '', tnhtml = '', twhtml = '';
@@ -1120,14 +1186,42 @@ $(() => {
     });
     $('#api_key').on('click', function() {
         if (goodkey && $(this).val().length === 36) {
-            clipboard.writeText(key);
+            clipboard.writeText(HY_HEADER['API-Key']);
             return ModalWindow.open({ title: 'API Key Copied to Clipboard' });
         }
-        let copied = clipboard.readText();
-        if (copied) copied = copied.replace(/\s/g, '');
-        if (copied.length !== 36) return ModalWindow.open({ title: 'Invalid API key', content: 'Make sure you have copied the correct Hypixel API key! Generate a new one using command "<b>/api new</b>" on Hypixel.', type: -1 });
-        key = copied;
-        verifyKey($(this));
+        clipboardKey($(this));
+    });
+    $('#revert_api-key').on('click', function() {
+        ModalWindow.invalidKey = false;
+        ModalWindow.open({ title: "API Key Successfully Reset!", class: -4,
+            content: `
+                You have <b>removed</b> your Hypixel API Key from the overlay! The overlay requires an API key to operate.
+                <ul>
+                    <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
+                    <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
+                </ul>
+                <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">
+            `
+        });
+        goodkey = false;
+        config.delete('key');
+        HY_HEADER['API-Key'] = '1';
+        $('#hy-dev-portal').on('click', () => {shell.openExternal('https://developer.hypixel.net/dashboard');});
+        $('#api-key-guide').on('click', () => {shell.openExternal('https://github.com/Chit132/abyss-overlay/wiki/Hypixel-API-Keys-Guide');});
+        $('#modal_api_key').on('click', function() {
+            clipboardKey($('#api-key'));
+            if (goodkey) {
+                $(this).parent().parent().parent().remove();
+                ModalWindow.invalidKey = false;
+            }
+        });
+    });
+    $('#ign_input').on('click', () => { ipcRenderer.send('focus', true); });
+    $('#ign_input').on('focusout', function() {
+        ipcRenderer.send('focus', false);
+        if ($(this).val().length > 0) {
+            verifyIGN($(this).val(), $(this));
+        }
     });
     $('#changeclient').on('click', () => {
         config.delete('players'); config.set('settings.pos', currentWindow.getPosition()); config.set('settings.size', [currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, currentWindow.webContents.getOwnerBrowserWindow().getBounds().height]);
@@ -1152,17 +1246,165 @@ $(() => {
         config.delete('settings.color');
     });
 
+    function mapKeyPressToAccelerator(key) {
+        if (/^[a-zA-Z0-9]$/.test(key)) {
+          return key;
+        }
+      
+        switch (key) {
+          case 'Control':
+            return 'Ctrl';
+          case 'Meta':
+            return 'Cmd';
+          case 'Alt':
+            return 'Alt';
+          case 'Shift':
+            return 'Shift';
+          case 'CapsLock':
+            return 'CapsLock';
+          case 'NumLock':
+            return 'NumLock';
+          case 'ScrollLock':
+            return 'ScrollLock';
+          case 'Tab':
+            return 'Tab';
+          case ' ':
+            return 'Space';
+          case 'Backspace':
+            return 'Backspace';
+          case 'Delete':
+            return 'Delete';
+          case 'Enter':
+            return 'Enter';
+          case 'ArrowUp':
+            return 'Up';
+          case 'ArrowDown':
+            return 'Down';
+          case 'ArrowLeft':
+            return 'Left';
+          case 'ArrowRight':
+            return 'Right';
+          case 'Home':
+            return 'Home';
+          case 'End':
+            return 'End';
+          case 'PageUp':
+            return 'PageUp';
+          case 'PageDown':
+            return 'PageDown';
+          case 'Escape':
+            return 'Esc';
+          default:
+            if (key.startsWith('F') && key.length === 2 && !isNaN(parseInt(key[1]))) {
+              const n = parseInt(key[1]);
+              if (n >= 1 && n <= 24) {
+                return 'F' + n;
+              }
+            }
+            return null;
+        }
+      }
+      
+      
+
+    function normalizeKeybind(keybind) {
+        keybind = keybind.length === 0 ? '<span style="color: grey">Unbound</span>' : keybind;
+        keybind = keybind.replaceAll('CommandOrControl', () => {
+            if(process.platform === "darwin") return "Command"
+            else return "Control"
+        });
+        keybind = keybind.replaceAll(/Ctrl|Control/g, '<span style="color: #84cc16;">Control</span>');
+        keybind = keybind.replaceAll(/Cmd|Command/g, '<span style="color: #84cc16;">Command</span>');
+        keybind = keybind.replaceAll('Shift', '<span style="color: #f59e0b;">Shift</span>');
+        return keybind.replaceAll('+', '<span style="color: red; margin-inline: 5px;">+</span>');
+    }
+
+    function keybindController(id) {
+        const SET_KEYBIND_HTML = `
+        <p style="text-align: center; width: 100%">Click the box below to record keybind</p>
+            <div class="custom-select_trigger" id="${id}keybindmodal"><p style="text-transform: uppercase; text-align: center; width: 100%"></p></div>
+            <p style="text-align: center; width: 100%">Press <b>ESC</b> to save keybind</p>
+        `;
+        ModalWindow.open({ title: 'Set Keybind', type: 0, content: SET_KEYBIND_HTML, focused: true });
+        ipcRenderer.send('focus', true);
+    
+        let keypresses = [];
+        let paused = false;
+    
+        var save = () => {
+            ipcRenderer.send('focus', false);
+            config.set(`settings.keybinds.${id}`, keypresses.join("+"));
+            ipcRenderer.send('setKeybind', id, keypresses.join("+"));
+        };
+    
+        var keydownListener = function(event) {
+            if (event.key === "Escape") {
+                save();
+                $('.modal_overlay').remove();
+                $(`[data-type="${id}"]`).html(normalizeKeybind(keypresses.join("+")));
+                document.removeEventListener("keydown", keydownListener);
+                document.removeEventListener("keyup", keyupListener);
+                return;
+            }
+            if (paused) {
+                keypresses = [];
+                paused = false;
+            }
+            let mappedKey = mapKeyPressToAccelerator(event.key)
+            if (keypresses.includes(mappedKey)) return;
+            if (keypresses.length < 3) {
+                if(mappedKey != null){
+                    keypresses.push(mappedKey)
+                    $(`#${id}keybindmodal > p`).html(normalizeKeybind(keypresses.join(" + ")));
+                }
+            }
+        };
+    
+        var keyupListener = function(event) {
+            if (keypresses[0] == event.key) {
+                paused = true;
+            }
+        };
+    
+        document.addEventListener("keydown", keydownListener);
+        document.addEventListener("keyup", keyupListener);
+    
+        $(`#${id}keybindmodal`).on('click', () => {
+            keypresses = [];
+            paused = false;
+            $(`#${id}keybindmodal > p`).text("?");
+        });
+    }
+
+    $('.keybind').on('click', function() { keybindController($(this).data().type); });
+    
+    $('.keybind').html(function() { return (normalizeKeybind(config.get(`settings.keybinds.${$(this).data().type}`) ?? $(this).data().default)); });
+    
+    $('.revertkeybind').on('click', function() {
+        let keybindElem = $(this).parent().find('.keybind');
+        config.set(`settings.keybinds.${keybindElem.data().type}`, keybindElem.data().default);
+        ipcRenderer.send('setKeybind', keybindElem.data().type, keybindElem.data().default);
+        keybindElem.html(normalizeKeybind(keybindElem.data().default));
+    });
+    
+    ipcRenderer.on('clear', () => {
+        players = [];
+        numplayers = 0;
+        changed = true;
+        updateArray();
+    });
+
     $('#badlion').on('click', {client: 'badlion'}, main);
     $('#lunar').on('click', {client: 'lunar'}, main);
     $('#vanilla').on('click', {client: 'vanilla'}, main);
     $('#pvplounge').on('click', {client: 'pvplounge'}, main);
-    $('#feather').on('click', {client: 'feather'}, main);
+    $('#labymod').on('click', {client: 'labymod'}, main);
     $('#feather').on('click', {client: 'feather'}, main);
     $('#badlion').on('click', () => {config.set('settings.client', 'badlion')});
     $('#lunar').on('click', () => {config.set('settings.client', 'lunar')});
     $('#vanilla').on('click', () => {config.set('settings.client', 'vanilla')});
     $('#pvplounge').on('click', () => {config.set('settings.client', 'pvplounge')});
-    $('#feather').on('click', () => {config.set('settings.client', 'feather')});
+    $('#labymod').on('click', () => {config.set('settings.client', 'labymod')});
     $('#feather').on('click', () => {config.set('settings.client', 'feather')});
 
     let hoverTimer = -1;
@@ -1216,7 +1458,7 @@ $(() => {
 
     function updateSession(startapi, e = 0){
         let sessionHTML = '', startplayer = startapi;
-        $.ajax({type: 'GET', async: false, url: apilink+useruuid, success: (data) => {
+        $.ajax({type: 'GET', url: `${HY_API}/player?uuid=${useruuid}`, headers: HY_HEADER, success: (data) => {
             try{
                 $('#sessionavatar').attr('src', `https://crafatar.com/avatars/${useruuid}?size=100&default=MHF_Steve&overlay`);
                 if (data.success === true && data.player !== null){
@@ -1324,6 +1566,9 @@ $(() => {
         if ($('#sessiondiv').css('display') === 'none'){
             updateSession(startapi);
             $('#session').css('background-image', 'url(../assets/session2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'inline-block'); $('#settingsdiv').css('display', 'none');
+            if (!useruuid) {
+                ModalWindow.open({ title: 'Missing username', type: -2, content: 'The session stats feature is <b>NOT available</b> without your Minecraft username! <ul><li style="height: auto">Enter your IGN in overlay settings</li></ul>' });
+            }
         }
         else{
             $('#session').css('background-image', 'url(../assets/session1.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#settings').css('background-image', 'url(../assets/settings1.png)'); $('#infodiv').css('display', 'none'); $('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block'); $('#sessiondiv').css('display', 'none'); $('#settingsdiv').css('display', 'none');
