@@ -309,7 +309,7 @@ function winsColor(wins){
 
 function getTag(api, tagslist = []){
     let temp = false;
-    try{temp = tagslist.find(o => o.uuid === api.id).tag}
+    try{temp = tagslist.find(o => o.uuid === api.uuid).tag}
     catch{temp = false;}
     try{
         if (api.inParty) return '<li style="color: #03C800">P</li>';
@@ -317,10 +317,6 @@ function getTag(api, tagslist = []){
         else if (api.partyReq) return '<li style="color: #37B836">PREQ</li>';
         else if (api.friendReq) return '<li style="color: #D6D600">FREQ</li>';
         else if (api.guildList) return '<li style="color: #36C700">GLD</li>';
-        else if (api.id === 'df954981d7204b4d84e19d294f703868') return '<li style="color: #AA00AA">DEV</li>';
-        else if (api.id === '6440f5d5cc30428c812deb892c5cd411') return '<li style="color: #FFB69D">QT♡</li>';
-        else if (api.id === '2b034ebee1514b75a8a67c50d8c7fd29') return '<li style="color: #E998B7">✨</li>';
-        else if (api.id === 'c2291b87d894461daca36be83fc51310' || api.id === '48ed8ffb95ec4647b7c1c5990d40a6f2' || api.id === '9b5aeb7e3d9b43b2b026b2e444da24ff' || api.id === '01f32cf78b1a4d2f8b15b477c65f7fb7' || api.id === '01c59560e6014b9aa84c24877c485f63' || api.id === 'a3cef65ded744b739f8e46db5d87d6a3' || api.id === '2f457183cca44a3ea923a03af37de287') return '<li style="color: #E998B7">QT</li>';
         else if (api.achievements.bedwars_level < 150 && api.stats.Bedwars.final_deaths_bedwars/api.stats.Bedwars.losses_bedwars < 0.75 && api.stats.Bedwars.final_kills_bedwars/api.stats.Bedwars.final_deaths_bedwars < 1.5) return '<li style="color: #FF5555">SNPR</li>';
         else if (temp) return temp.replaceAll('[', '<').replaceAll(']', '>').replaceAll("'", '"');
         else if ((api.achievements.bedwars_level < 15 && api.stats.Bedwars.final_kills_bedwars/api.stats.Bedwars.final_deaths_bedwars > 5) || (api.achievements.bedwars_level > 15 && api.achievements.bedwars_level < 100 && api.achievements.bedwars_level/(api.stats.Bedwars.final_kills_bedwars/api.stats.Bedwars.final_deaths_bedwars) <= 5)) return '<li style="color: #5555FF">ALT</li>';

@@ -27,14 +27,14 @@ const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsCol
 const { ModalWindow } = require('./modalWindow.js');
 const { PopupStats } = require('./popupStats.js');
 const { Clients } = require('./clients.js');
-const { verify } = require('crypto');
-const { first, initial } = require('lodash');
+const { Cache } = require('./cache.js');
 
 
 config.delete('players');
 const HY_API = 'https://api.hypixel.net', HY_HEADER = { 'API-Key': config.get('key', '1') };
-const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
-var players = [], numplayers = 0, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = '', useruuid = config.get('uuid', undefined), sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, backendIP = process.env.BACKEND_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
+const CACHE = new Cache();
+var players = [], numplayers = 0, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, overlayBackendDown = false; logpath = '', goodfile = true, currentWindow = '', user = '', useruuid = config.get('uuid', undefined), sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
 function updateTags(){
@@ -309,101 +309,163 @@ function updateArray(){
     con.log(temp);*/
 }
 
-function playerAJAX(uuid, ign, e, guild = ''){
-    let api = '', got = false;
+function appendPlayer(ign, api, options, guild = '') {
+    let ttaghtml = '<li>-</li>';
+    if (options.meta === 1) api.inParty = true;
+    else if (options.meta === 2) api.call = true;
+    else if (options.meta === 3) api.partyReq = true;
+    else if (options.meta === 4) api.friendReq = true;
+    else if (options.meta === 5) api.guildList = true;
+    ttaghtml = getTag(api, tagslist);
+    let avatar = `https://crafatar.com/avatars/${api.uuid}?size=48&default=MHF_Steve&overlay`;
+    if (gamemode === 0) {
+        let stars = '<span>[0✫]</span>', twshtml = '<li style="color: red">?</li>', tfkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tfinalshtml = '<li>0</li>', twinshtml = '<li>0</li>';
+        if (api.stats === undefined){}
+        else if (api.stats.Bedwars === undefined){}
+        else{
+            let tfkdr = 0, twlr = 0;//tbblr = 0;
+            if (api.achievements !== undefined && api.achievements.bedwars_level !== undefined){stars = starColor(api.achievements.bedwars_level);}
+            if (api.stats.Bedwars[`${gmode}winstreak`] !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Bedwars[`${gmode}winstreak`])}">${api.stats.Bedwars[`${gmode}winstreak`]}</li>`;
+            if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}final_deaths_bedwars`] !== undefined){tfkdr = parseFloat(api.stats.Bedwars[`${gmode}final_kills_bedwars`]/api.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(2); tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
+            else if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined){tfkdr = api.stats.Bedwars[`${gmode}final_kills_bedwars`]; tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
+            if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}losses_bedwars`] !== undefined){twlr = parseFloat(api.stats.Bedwars[`${gmode}wins_bedwars`]/api.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            else if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined){twlr = api.stats.Bedwars[`${gmode}wins_bedwars`]; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            //if (api.stats.Bedwars.beds_broken_bedwars !== undefined && api.stats.Bedwars.beds_lost_bedwars !== undefined) tbblr = parseFloat(api.stats.Bedwars.beds_broken_bedwars/api.stats.Bedwars.beds_lost_bedwars).toFixed(2); tbblrhtml = `<li style="color: ${bblrColor(tbblr)}">${tbblr}</li>`;
+            if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined) tfinalshtml = `<li style="color: ${finalsColor(api.stats.Bedwars[`${gmode}final_kills_bedwars`])}">${api.stats.Bedwars[`${gmode}final_kills_bedwars`]}</li>`;
+            if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.Bedwars[`${gmode}wins_bedwars`])}">${api.stats.Bedwars[`${gmode}wins_bedwars`]}</li>`;
+        }
+        let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${stars} ${nameColor(api)}${guild}</li>`;
+        players.push({name: ign, api: api, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tfkdrhtml, wlrhtml: twlrhtml, finalshtml: tfinalshtml, winshtml: twinshtml});
+    }
+    else if (gamemode === 1) {
+        let level = '<span>[0⚔]</span>', ttaghtml = '<li>-</li>', tnwlhtml = '<li>0</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
+        let tswlvl = 0;
+        if (api.stats === undefined){}
+        else if (api.stats.SkyWars === undefined){}
+        else{
+            let tkdr = 0, twlr = 0;
+            if (api.stats.SkyWars.skywars_experience !== undefined){
+                let lvl = swLVL(api.stats.SkyWars.skywars_experience);
+                level = starColor(lvl); tswlvl = lvl;
+            }
+            if (api.networkExp !== undefined){let tnwl = NWL(api.networkExp); tnwlhtml = `<li style="color: ${wsColor(tnwl)}">${tnwl}</li>`;}
+            if (api.stats.SkyWars.kills !== undefined && api.stats.SkyWars.deaths !== undefined){tkdr = parseFloat(api.stats.SkyWars.kills/api.stats.SkyWars.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+            else if (api.stats.SkyWars.kills !== undefined){tkdr = api.stats.SkyWars.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+            if (api.stats.SkyWars.wins !== undefined && api.stats.SkyWars.losses !== undefined){twlr = parseFloat(api.stats.SkyWars.wins/api.stats.SkyWars.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            else if (api.stats.SkyWars.wins !== undefined){twlr = api.stats.SkyWars.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            if (api.stats.SkyWars.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.SkyWars.kills)}">${api.stats.SkyWars.kills}</li>`;
+            if (api.stats.SkyWars.wins !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.SkyWars.wins)}">${api.stats.SkyWars.wins}</li>`;
+        }
+        let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
+        players.push({name: ign, api: api, swlvl: tswlvl, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: tnwlhtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
+    }
+    else if (gamemode === 2) {
+        let level = '<span>[I]</span>', ttaghtml = '<li>-</li>', twshtml = '<li style="color: red">?</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
+        let tdwins = 0;
+        if (api.stats === undefined){}
+        else if (api.stats.Duels === undefined){}
+        else{
+            let tkdr = 0, twlr = 0;
+            if (api.stats.Duels.wins !== undefined){level = starColor(api.stats.Duels.wins); twinshtml = `<li style="color: ${winsColor(api.stats.Duels.wins)}">${api.stats.Duels.wins}</li>`; tdwins = api.stats.Duels.wins;}
+            if (api.stats.Duels.current_winstreak !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Duels.current_winstreak)}">${api.stats.Duels.current_winstreak}</li>`;
+            if (api.stats.Duels.kills !== undefined && api.stats.Duels.deaths !== undefined){tkdr = parseFloat(api.stats.Duels.kills/api.stats.Duels.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+            else if (api.stats.Duels.kills !== undefined){tkdr = api.stats.Duels.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+            if (api.stats.Duels.wins !== undefined && api.stats.Duels.losses !== undefined){twlr = parseFloat(api.stats.Duels.wins/api.stats.Duels.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            else if (api.stats.Duels.wins !== undefined){twlr = api.stats.Duels.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            if (api.stats.Duels.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.Duels.kills)}">${api.stats.Duels.kills}</li>`;
+        }
+        let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
+        players.push({name: ign, api: api, dwins: tdwins, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
+    }
+    updateArray();
+}
+
+function playerAJAX(uuid, ign, options, guild = '') {
+    let api = '';
     $.ajax({type: 'GET', async: true, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
         keyThrottle = false; apiDown = false; ModalWindow.keyThrottle = false; ModalWindow.APIdown = false;
-        if (data.success === true && data.player !== null){
-            let tswlvl = -1, tdwins = -1;
-            if (data.player.displayname === ign){
-                api = data.player; api.id = uuid; got = true;
-                if (gamemode === 0){
-                    let stars = '<span>[0✫]</span>', ttaghtml = '<li>-</li>', twshtml = '<li style="color: red">?</li>', tfkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tfinalshtml = '<li>0</li>', twinshtml = '<li>0</li>';
-                    let avatar = `https://crafatar.com/avatars/${api.id}?size=48&default=MHF_Steve&overlay`;
-                    if (api.stats === undefined){}
-                    else if (api.stats.Bedwars === undefined){}
-                    else{
-                        let tfkdr = 0, twlr = 0;//tbblr = 0;
-                        if (api.achievements !== undefined && api.achievements.bedwars_level !== undefined){stars = starColor(api.achievements.bedwars_level);}
-                        if (api.stats.Bedwars[`${gmode}winstreak`] !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Bedwars[`${gmode}winstreak`])}">${api.stats.Bedwars[`${gmode}winstreak`]}</li>`;
-                        if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}final_deaths_bedwars`] !== undefined){tfkdr = parseFloat(api.stats.Bedwars[`${gmode}final_kills_bedwars`]/api.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(2); tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
-                        else if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined){tfkdr = api.stats.Bedwars[`${gmode}final_kills_bedwars`]; tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
-                        if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}losses_bedwars`] !== undefined){twlr = parseFloat(api.stats.Bedwars[`${gmode}wins_bedwars`]/api.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        else if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined){twlr = api.stats.Bedwars[`${gmode}wins_bedwars`]; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        //if (api.stats.Bedwars.beds_broken_bedwars !== undefined && api.stats.Bedwars.beds_lost_bedwars !== undefined) tbblr = parseFloat(api.stats.Bedwars.beds_broken_bedwars/api.stats.Bedwars.beds_lost_bedwars).toFixed(2); tbblrhtml = `<li style="color: ${bblrColor(tbblr)}">${tbblr}</li>`;
-                        if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined) tfinalshtml = `<li style="color: ${finalsColor(api.stats.Bedwars[`${gmode}final_kills_bedwars`])}">${api.stats.Bedwars[`${gmode}final_kills_bedwars`]}</li>`;
-                        if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.Bedwars[`${gmode}wins_bedwars`])}">${api.stats.Bedwars[`${gmode}wins_bedwars`]}</li>`;
-                    }
-                    if (e === 1) api.inParty = true;
-                    else if (e === 2) api.call = true;
-                    else if (e === 3) api.partyReq = true;
-                    else if (e === 4) api.friendReq = true;
-                    else if (e === 5) api.guildList = true;
-                    ttaghtml = getTag(api, tagslist);
-                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${stars} ${nameColor(api)}${guild}</li>`;
-                    players.push({name: ign, api: api, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tfkdrhtml, wlrhtml: twlrhtml, finalshtml: tfinalshtml, winshtml: twinshtml});
-                }
-                else if (gamemode === 1){
-                    let level = '<span>[0⚔]</span>', ttaghtml = '<li>-</li>', tnwlhtml = '<li>0</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
-                    let avatar = `https://crafatar.com/avatars/${api.id}?size=48&default=MHF_Steve&overlay`;
-                    tswlvl = 0;
-                    if (api.stats === undefined){}
-                    else if (api.stats.SkyWars === undefined){}
-                    else{
-                        let tkdr = 0, twlr = 0;
-                        if (api.stats.SkyWars.skywars_experience !== undefined){
-                            let lvl = swLVL(api.stats.SkyWars.skywars_experience);
-                            level = starColor(lvl); tswlvl = lvl;
-                        }
-                        if (api.networkExp !== undefined){let tnwl = NWL(api.networkExp); tnwlhtml = `<li style="color: ${wsColor(tnwl)}">${tnwl}</li>`;}
-                        if (api.stats.SkyWars.kills !== undefined && api.stats.SkyWars.deaths !== undefined){tkdr = parseFloat(api.stats.SkyWars.kills/api.stats.SkyWars.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
-                        else if (api.stats.SkyWars.kills !== undefined){tkdr = api.stats.SkyWars.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
-                        if (api.stats.SkyWars.wins !== undefined && api.stats.SkyWars.losses !== undefined){twlr = parseFloat(api.stats.SkyWars.wins/api.stats.SkyWars.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        else if (api.stats.SkyWars.wins !== undefined){twlr = api.stats.SkyWars.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        if (api.stats.SkyWars.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.SkyWars.kills)}">${api.stats.SkyWars.kills}</li>`;
-                        if (api.stats.SkyWars.wins !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.SkyWars.wins)}">${api.stats.SkyWars.wins}</li>`;
-                    }
-                    if (e === 1) api.inParty = true;
-                    else if (e === 2) api.call = true;
-                    else if (e === 3) api.partyReq = true;
-                    else if (e === 4) api.friendReq = true;
-                    else if (e === 5) api.guildList = true;
-                    ttaghtml = getTag(api, tagslist);
-                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
-                    players.push({name: ign, api: api, swlvl: tswlvl, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: tnwlhtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
-                }
-                else if (gamemode === 2){
-                    let level = '<span>[I]</span>', ttaghtml = '<li>-</li>', twshtml = '<li style="color: red">?</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
-                    let avatar = `https://crafatar.com/avatars/${api.id}?size=48&default=MHF_Steve&overlay`;
-                    tdwins = 0;
-                    if (api.stats === undefined){}
-                    else if (api.stats.Duels === undefined){}
-                    else{
-                        let tkdr = 0, twlr = 0;
-                        if (api.stats.Duels.wins !== undefined){level = starColor(api.stats.Duels.wins); twinshtml = `<li style="color: ${winsColor(api.stats.Duels.wins)}">${api.stats.Duels.wins}</li>`; tdwins = api.stats.Duels.wins;}
-                        if (api.stats.Duels.current_winstreak !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Duels.current_winstreak)}">${api.stats.Duels.current_winstreak}</li>`;
-                        if (api.stats.Duels.kills !== undefined && api.stats.Duels.deaths !== undefined){tkdr = parseFloat(api.stats.Duels.kills/api.stats.Duels.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
-                        else if (api.stats.Duels.kills !== undefined){tkdr = api.stats.Duels.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
-                        if (api.stats.Duels.wins !== undefined && api.stats.Duels.losses !== undefined){twlr = parseFloat(api.stats.Duels.wins/api.stats.Duels.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        else if (api.stats.Duels.wins !== undefined){twlr = api.stats.Duels.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        if (api.stats.Duels.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.Duels.kills)}">${api.stats.Duels.kills}</li>`;
-                    }
-                    if (e === 1) api.inParty = true;
-                    else if (e === 2) api.call = true;
-                    else if (e === 3) api.partyReq = true;
-                    else if (e === 4) api.friendReq = true;
-                    else if (e === 5) api.guildList = true;
-                    ttaghtml = getTag(api, tagslist);
-                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
-                    players.push({name: ign, api: api, dwins: tdwins, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
-                }
+        if (data.success === true && data.player !== null) {
+            if (data.player.displayname === ign) {
+                api = data.player;
+                api.uuid = uuid; api.guild = guild;
+                CACHE.set(ign, api);
+                appendPlayer(ign, api, options, guild);
+
+                // let ttaghtml = '<li>-</li>';
+                // if (options.meta === 1) api.inParty = true;
+                // else if (options.meta === 2) api.call = true;
+                // else if (options.meta === 3) api.partyReq = true;
+                // else if (options.meta === 4) api.friendReq = true;
+                // else if (options.meta === 5) api.guildList = true;
+                // ttaghtml = getTag(api, tagslist);
+                // let avatar = `https://crafatar.com/avatars/${api.uuid}?size=48&default=MHF_Steve&overlay`;
+                // if (gamemode === 0){
+                //     let stars = '<span>[0✫]</span>', twshtml = '<li style="color: red">?</li>', tfkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tfinalshtml = '<li>0</li>', twinshtml = '<li>0</li>';
+                //     if (api.stats === undefined){}
+                //     else if (api.stats.Bedwars === undefined){}
+                //     else{
+                //         let tfkdr = 0, twlr = 0;//tbblr = 0;
+                //         if (api.achievements !== undefined && api.achievements.bedwars_level !== undefined){stars = starColor(api.achievements.bedwars_level);}
+                //         if (api.stats.Bedwars[`${gmode}winstreak`] !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Bedwars[`${gmode}winstreak`])}">${api.stats.Bedwars[`${gmode}winstreak`]}</li>`;
+                //         if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}final_deaths_bedwars`] !== undefined){tfkdr = parseFloat(api.stats.Bedwars[`${gmode}final_kills_bedwars`]/api.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(2); tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
+                //         else if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined){tfkdr = api.stats.Bedwars[`${gmode}final_kills_bedwars`]; tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
+                //         if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}losses_bedwars`] !== undefined){twlr = parseFloat(api.stats.Bedwars[`${gmode}wins_bedwars`]/api.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+                //         else if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined){twlr = api.stats.Bedwars[`${gmode}wins_bedwars`]; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+                //         //if (api.stats.Bedwars.beds_broken_bedwars !== undefined && api.stats.Bedwars.beds_lost_bedwars !== undefined) tbblr = parseFloat(api.stats.Bedwars.beds_broken_bedwars/api.stats.Bedwars.beds_lost_bedwars).toFixed(2); tbblrhtml = `<li style="color: ${bblrColor(tbblr)}">${tbblr}</li>`;
+                //         if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined) tfinalshtml = `<li style="color: ${finalsColor(api.stats.Bedwars[`${gmode}final_kills_bedwars`])}">${api.stats.Bedwars[`${gmode}final_kills_bedwars`]}</li>`;
+                //         if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.Bedwars[`${gmode}wins_bedwars`])}">${api.stats.Bedwars[`${gmode}wins_bedwars`]}</li>`;
+                //     }
+                //     let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${stars} ${nameColor(api)}${guild}</li>`;
+                //     players.push({name: ign, api: api, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tfkdrhtml, wlrhtml: twlrhtml, finalshtml: tfinalshtml, winshtml: twinshtml});
+                // }
+                // else if (gamemode === 1){
+                //     let level = '<span>[0⚔]</span>', ttaghtml = '<li>-</li>', tnwlhtml = '<li>0</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
+                //     let tswlvl = 0;
+                //     if (api.stats === undefined){}
+                //     else if (api.stats.SkyWars === undefined){}
+                //     else{
+                //         let tkdr = 0, twlr = 0;
+                //         if (api.stats.SkyWars.skywars_experience !== undefined){
+                //             let lvl = swLVL(api.stats.SkyWars.skywars_experience);
+                //             level = starColor(lvl); tswlvl = lvl;
+                //         }
+                //         if (api.networkExp !== undefined){let tnwl = NWL(api.networkExp); tnwlhtml = `<li style="color: ${wsColor(tnwl)}">${tnwl}</li>`;}
+                //         if (api.stats.SkyWars.kills !== undefined && api.stats.SkyWars.deaths !== undefined){tkdr = parseFloat(api.stats.SkyWars.kills/api.stats.SkyWars.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+                //         else if (api.stats.SkyWars.kills !== undefined){tkdr = api.stats.SkyWars.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+                //         if (api.stats.SkyWars.wins !== undefined && api.stats.SkyWars.losses !== undefined){twlr = parseFloat(api.stats.SkyWars.wins/api.stats.SkyWars.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+                //         else if (api.stats.SkyWars.wins !== undefined){twlr = api.stats.SkyWars.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+                //         if (api.stats.SkyWars.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.SkyWars.kills)}">${api.stats.SkyWars.kills}</li>`;
+                //         if (api.stats.SkyWars.wins !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.SkyWars.wins)}">${api.stats.SkyWars.wins}</li>`;
+                //     }
+                //     let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
+                //     players.push({name: ign, api: api, swlvl: tswlvl, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: tnwlhtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
+                // }
+                // else if (gamemode === 2){
+                //     let level = '<span>[I]</span>', ttaghtml = '<li>-</li>', twshtml = '<li style="color: red">?</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
+                //     let tdwins = 0;
+                //     if (api.stats === undefined){}
+                //     else if (api.stats.Duels === undefined){}
+                //     else{
+                //         let tkdr = 0, twlr = 0;
+                //         if (api.stats.Duels.wins !== undefined){level = starColor(api.stats.Duels.wins); twinshtml = `<li style="color: ${winsColor(api.stats.Duels.wins)}">${api.stats.Duels.wins}</li>`; tdwins = api.stats.Duels.wins;}
+                //         if (api.stats.Duels.current_winstreak !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Duels.current_winstreak)}">${api.stats.Duels.current_winstreak}</li>`;
+                //         if (api.stats.Duels.kills !== undefined && api.stats.Duels.deaths !== undefined){tkdr = parseFloat(api.stats.Duels.kills/api.stats.Duels.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+                //         else if (api.stats.Duels.kills !== undefined){tkdr = api.stats.Duels.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+                //         if (api.stats.Duels.wins !== undefined && api.stats.Duels.losses !== undefined){twlr = parseFloat(api.stats.Duels.wins/api.stats.Duels.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+                //         else if (api.stats.Duels.wins !== undefined){twlr = api.stats.Duels.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+                //         if (api.stats.Duels.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.Duels.kills)}">${api.stats.Duels.kills}</li>`;
+                //     }
+                //     let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
+                //     players.push({name: ign, api: api, dwins: tdwins, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
+                // }
             }
-            else{got = true; players.push({name: ign, namehtml: ign, api: null});}
-            updateArray();
+            else{
+                players.push({name: ign, namehtml: ign, api: null});
+                updateArray();
+            }
         }
-        else if (api.player == null){got = true; players.push({name: ign, namehtml: ign, api: null}); updateArray();}
+        else if (api.player == null){players.push({name: ign, namehtml: ign, api: null}); updateArray();}
     }, error: (jqXHR) => {
-        got = false;
         if (jqXHR.status === 0) apiDown = true; 
         else if (jqXHR.status === 403) goodkey = false;
         else if (jqXHR.status === 429) keyThrottle = true;
@@ -412,18 +474,103 @@ function playerAJAX(uuid, ign, e, guild = ''){
     }});
 }
 
-function addPlayer(ign = '', e = 0) {
+function fetchPlayer_hypixel(uuid, ign, options) {
+    if (guildtag) {
+        $.ajax({type: 'GET', async: true, url: `${HY_API}/guild?player=${uuid}`, headers: HY_HEADER, success: (data) => {
+            if (data.success === true && data.guild) {
+                let guild = '';
+                if (data.guild && data.guild.tag) {
+                    guild = ` <span style="color: ${HypixelColors[data.guild.tagColor || 'DARK_GRAY']}">[${data.guild.tag}]</span>`;
+                }
+                playerAJAX(uuid, ign, options, guild);
+            }
+            else playerAJAX(uuid, ign, options);
+        }, error: () => {
+            playerAJAX(uuid, ign, options);
+        }});
+    }
+    else {
+        playerAJAX(uuid, ign, options);
+    }
+}
+
+function fetchPlayer_backend(uuid, ign, options) {
+    $.ajax({type: 'GET', async: true, url: `${backendIP}/player?uuid=${uuid}`, success: (data) => {
+        keyThrottle = false; overlayBackendDown = false; ModalWindow.keyThrottle = false; ModalWindow.APIdown = false;
+        if (data.success === true && data.player !== null) {
+            if (data.player.displayname === ign) {
+                api = data.player;
+                api.uuid = uuid;
+                let guild = '';
+                if (data.guild && data.guild.tag) {
+                    guild = ` <span style="color: ${HypixelColors[data.guild.tagColor || 'DARK_GRAY']}">[${data.guild.tag}]</span>`;
+                }
+                api.guild = guild;
+                CACHE.set(ign, api);
+                appendPlayer(ign, api, options, guild);
+            }
+            else {
+                players.push({name: ign, namehtml: ign, api: null});
+                updateArray();
+            }
+        }
+        else if (data.player == null){players.push({name: ign, namehtml: ign, api: null}); updateArray();}
+    }, error: (jqXHR) => {
+        if (jqXHR.status === 0) overlayBackendDown = true;
+        else if (jqXHR.status === 429) keyThrottle = true;
+        else {overlayBackendDown = true; players.push({name: ign, namehtml: ign, api: null})};
+        updateArray();
+    }});
+}
+
+function fetchPlayer(ign, options = {}) {
+    console.log(`Fetching player: ${ign}`);
+    $.ajax({type: 'GET', async: true, url: mojang + ign, success: (data, status) => {
+        if (status === 'success'){
+            if (!overlayBackendDown) {
+                fetchPlayer_backend(data.id, data.name, options);
+            } else {
+                fetchPlayer_hypixel(data.id, data.name, options);
+            }
+        } else {
+            players.push({name: ign, namehtml: ign, api: null});
+            updateArray();
+        }
+    }, error: () => {
+        players.push({name: ign, namehtml: ign, api: null});
+        updateArray();
+        console.error('error with mojang api GET uuid');
+    }});
+}
+
+function addPlayer(ign = undefined, options = { skipCache: false }) {
+    if (!ign) return;
+
+    options.meta ||= 0;
+    if (!options.skipCache) {
+        let data = CACHE.get(ign);
+        if (!data) {
+            fetchPlayer(ign, options);
+        } else {
+            appendPlayer(ign, data, options, data.guild);
+        }
+    } else {
+        fetchPlayer(ign, options);
+    }
+}
+
+function addPlayere(ign = '', e = 0) {
     let uuid = '';
     console.log(`Adding player: ${ign}`);
     $.ajax({type: 'GET', async: true, url: mojang+ign, success: (data, status) => {
         if (status === 'success'){
             uuid = data.id; ign = data.name;
             if (guildtag) {
-                let guild = '';
+                let guild = null;
                 $.ajax({type: 'GET', async: true, url: `${HY_API}/guild?player=${uuid}`, headers: HY_HEADER, success: (data) => {
                     if (data.success === true && data.guild) {
-                        if (data.success === true && data.guild){
-                            if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
+                        if (data.guild) {
+                            if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor || 'DARK_GRAY']}">[${data.guild.tag}]</span>`;
                         }
                         playerAJAX(uuid, ign, e, guild);
                     }
@@ -702,10 +849,10 @@ function main(event){
                 if ($('#infodiv').css('display') === 'none' && $('#settingsdiv').css('display') === 'none'){$('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block');}
                 let contains = false;
                 for (let i = 0; i < players.length; i++){if (user === players[i].name){contains = true;}}
-                if (!contains) addPlayer(user, 1);
+                if (!contains) addPlayer(user, { meta: 1 });
                 contains = false;
                 for (let i = 0; i < players.length; i++){if (pjoin === players[i].name){contains = true;}}
-                if (!contains) addPlayer(pjoin, 1);
+                if (!contains) addPlayer(pjoin, { meta: 1 });
             }
             else if (msg.indexOf('You left the party') !== -1 && msg.indexOf(':') === -1 && inlobby){players = []; updateArray();}
             else if (msg.indexOf('left the party') !== -1 && msg.indexOf(':') === -1 && inlobby){
@@ -732,7 +879,7 @@ function main(event){
                     for (let j = 0; j < players.length; j++){
                         if (players[j].name === tplayers[i]) contains = true;
                     }
-                    if (!contains) addPlayer(tplayers[i], 1);
+                    if (!contains) addPlayer(tplayers[i], { meta: 1 });
                 }
                 for (let i = 0; i < players.length; i++){
                     if (!tplayers.includes(players[i].name)){players.splice(i, 1); changed = true; updateArray();}
@@ -755,7 +902,7 @@ function main(event){
                             let contains = false;
                             for (let i = 0; i < players.length; i++){if (players[i].name === tmsgarray[i]){contains = true;}}
                             if (!contains){
-                                addPlayer(tmsgarray[i], 2);
+                                addPlayer(tmsgarray[i], { meta: 2 });
                                 if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, winheight, true); $('#show').css('transform', 'rotate(0deg)');}
                                 if ($('#infodiv').css('display') === 'none' && $('#settingsdiv').css('display') === 'none'){$('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block');}
                             }
@@ -769,7 +916,7 @@ function main(event){
                 if ((wsearch.toLowerCase() === 'me') || (wsearch.toLowerCase() === "i")) wsearch = user;
                 for (let i = 0; i < players.length; i++){if (wsearch.toLowerCase() === players[i].name.toLowerCase()){contains = true;}}
                 if (!contains){
-                    addPlayer(wsearch);
+                    addPlayer(wsearch, { skipCache: true });
                     if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, winheight, true); $('#show').css('transform', 'rotate(0deg)');}
                     if ($('#infodiv').css('display') === 'none' && $('#settingsdiv').css('display') === 'none'){$('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block');}
                 }
@@ -792,8 +939,8 @@ function main(event){
                 else tmsgarray = msg.split(' ?  ');
                 for (let i = 0; i < tmsgarray.length; i++){
                     //con.log(tmsgarray[i]);
-                    if (tmsgarray[i][0] === '[') addPlayer(tmsgarray[i].substring(tmsgarray[i].indexOf(' ')+1), 5);
-                    else addPlayer(tmsgarray[i], 5);
+                    if (tmsgarray[i][0] === '[') addPlayer(tmsgarray[i].substring(tmsgarray[i].indexOf(' ')+1), { meta: 5 });
+                    else addPlayer(tmsgarray[i], { meta: 5 });
                 }
             }
             else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', false)}, 10000);}
@@ -875,13 +1022,13 @@ function main(event){
             let msg = data;
             if (config.get('settings.call', true) && inlobby && msg.indexOf('to join their party!') !== -1 && msg.indexOf(':') === -1){
                 let tmsg = msg.substring(0, msg.indexOf('has')-1), tmsgarray = tmsg.split(' ');
-                if (tmsgarray[0].indexOf('[') !== -1) addPlayer(tmsgarray[1], 3);
-                else addPlayer(tmsgarray[0], 3);
+                if (tmsgarray[0].indexOf('[') !== -1) addPlayer(tmsgarray[1], { meta: 3 });
+                else addPlayer(tmsgarray[0], { meta: 3 });
             }
             else if (config.get('settings.call', true) && inlobby && msg.indexOf('Friend request from') === 0 && msg.indexOf(':') === -1){
                 //con.log('hi');
                 let tmsgarray = msg.split(' ');
-                addPlayer(tmsgarray[tmsgarray.length-1], 4);
+                addPlayer(tmsgarray[tmsgarray.length-1], { meta: 4 });
             }
         }
     });

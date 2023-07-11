@@ -38,6 +38,7 @@ function createWindow(){
     win.setAlwaysOnTop(true);
     win.setVisibleOnAllWorkspaces(true);
     win.setMenu(null);
+    win.webContents.setUserAgent(`Node v${process.versions.node}`);
 }
 
 let keybinds = {}
