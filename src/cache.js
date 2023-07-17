@@ -5,6 +5,7 @@ class Cache {
     constructor(init = {}) {
         this.data = init;
         this.timeouts = {};
+        this.timeoutTime = 10;
     }
 
     includes(key) {
@@ -17,9 +18,9 @@ class Cache {
         return this.data[key];
     }
 
-    set(key, value, timeout = true, minutes = 10) {
+    set(key, value, timeout = true, minutes = this.timeoutTime) {
         this.data[key] = value;
-
+        
         if (timeout) {
             clearTimeout(this.timeouts[key]);
             this.timeouts[key] = setTimeout(() => {
@@ -32,6 +33,12 @@ class Cache {
     RESET() {
         this.data = {};
         this.timeouts = {};
+    }
+
+    setTimeoutTime(time = 10) {
+        if (!time) return;
+
+        this.timeoutTime = time;
     }
 }
 

@@ -1,7 +1,8 @@
 window.$ = window.jQuery = require('jquery');
 
 const ModalWindow = {
-    keyThrottle: false,
+    HyThrottle: false,
+    backendThrottle: false,
     APIdown: false,
     DBdown: false,
     invalidKey: false,
@@ -48,9 +49,9 @@ const ModalWindow = {
             options.icon = 'info';
         }
         if (options.class === -1) {
-            if (this.keyThrottle) return;
+            if (this.HyThrottle) return;
             options.class = 'err-key-throttle';
-            this.keyThrottle = true;
+            this.HyThrottle = true;
         } else if (options.class === -2) {
             if (this.APIdown) return;
             options.class = 'err-api-down';
@@ -62,8 +63,11 @@ const ModalWindow = {
         } else if (options.class === -4) {
             if (this.invalidKey) return;
             options.class = 'err-invalid-key';
-            options.block = true;
             this.invalidKey = true;
+        } else if (options.class === -5) {
+            if (this.backendThrottle) return;
+            options.class = 'err-key-throttle';
+            this.backendThrottle = true;
         } else {
             options.class = '';
         }
