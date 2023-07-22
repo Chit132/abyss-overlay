@@ -144,15 +144,24 @@ function verifyIGN(ign, $apiElement) {
 }
 
 function pingBackend() {
+    let callMade = Date.now();
     $.ajax({type: 'GET', async: true, url: `${backendIP}/ping`, timeout: 3750, success: (data) => {
         overlayBackendDown = false;
         CACHE.setTimeoutTime(data.cache_player);
-        con.log('Backend ping ' + data.response_time);
+        con.log('Backend ping ' + (Date.now() - callMade));
         ModalWindow.open({ title: 'Connection successful!', type: 1,
-            content: 'The overlay has successfully connected to the backend API.<br>You may start queuing games!'
+            content: 'You may start queuing games!'
         });
     }, error: (jqXHR) => {
         if (jqXHR.status === 0) overlayBackendDown = true;
+        else if (jqXHR.status === 403) {
+            overlayBackendDown = true;
+            setTimeout(() => {
+                ModalWindow.open({ title: 'Developer mode', type: -1,
+                    content: 'You do not have access to the overlay backend API! Therefore, you are in development mode and should use your own <b>Hypixel API key</b>.'
+                });
+            }, 1000);
+        }
         else if (jqXHR.status === 500) hypixelAPIdown = true;
         updateArray();
     }, complete: () => {
@@ -199,7 +208,7 @@ function updateHTML() {
             let modalOpened = ModalWindow.open({ title: "Overlay backend offline!", class: -4, type: -1, block: true,
                 content: `
                     The Abyss Overlay backend API is <b>currently down!</b> In the meantime, you may use your own <b>Hypixel API key</b> to fetch player stats (AYOR).
-                    ${HY_HEADER['API-Key'] === '1' ? '' : 'The previous Hypixel API key you entered has expired! Please enter a new one if you would like to continue.'}<br>
+                    Otherwise, you can wait for the backend API to be back online.
                     <ul>
                         <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
                         <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
@@ -425,7 +434,7 @@ function playerAJAX(uuid, ign, options, guild = '') {
         HyThrottle = false; hypixelAPIdown = false; ModalWindow.HyThrottle = false; ModalWindow.APIdown = false;
         if (data.success === true && data.player !== null) {
             if (data.player.displayname === ign) {
-                con.log('got from hypixel: ' + ign)
+                // con.log('got from hypixel: ' + ign)
                 api = data.player;
                 api.uuid = uuid; api.guild = guild;
                 CACHE.set(ign, api);
@@ -475,7 +484,7 @@ function fetchPlayer_backend(uuid, ign, options) {
         backendThrottle = false; overlayBackendDown = false; ModalWindow.backendThrottle = false; ModalWindow.APIdown = false;
         if (data.success === true && data.player !== null) {
             if (data.player.displayname === ign) {
-                con.log('got from backend: ' + ign)
+                // con.log('got from backend: ' + ign)
                 api = data.player;
                 api.uuid = uuid;
                 let guild = '';
@@ -1154,7 +1163,7 @@ $(() => {
 
     ipcRenderer.on('test', (event, ...arg) => {
         console.log('test');
-        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', 'Rexisflying', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'WarOG'];
+        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'zryp', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', 'Rexisflying', 'Divinah', '86tops', 'ip_man', 'm_lly', 'WarOG'];
         for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
 
         //ipcRenderer.send('autowho');
@@ -1295,27 +1304,12 @@ $(() => {
     $('#revert_api-key').on('click', function() {
         ModalWindow.invalidKey = false;
         ModalWindow.open({ title: "API Key Successfully Reset!", class: -4,
-            content: `
-                You have <b>removed</b> your Hypixel API Key from the overlay! The overlay requires an API key to operate.
-                <ul>
-                    <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
-                    <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
-                </ul>
-                <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">
-            `
+            content: 'You have <b>removed</b> your Hypixel API Key from the overlay!'
         });
         goodkey = false;
         config.delete('key');
         HY_HEADER['API-Key'] = '1';
-        $('#hy-dev-portal').on('click', () => {shell.openExternal('https://developer.hypixel.net/dashboard');});
-        $('#api-key-guide').on('click', () => {shell.openExternal('https://github.com/Chit132/abyss-overlay/wiki/Hypixel-API-Keys-Guide');});
-        $('#modal_api_key').on('click', function() {
-            clipboardKey($('#api-key'));
-            if (goodkey) {
-                $(this).parent().parent().parent().remove();
-                ModalWindow.invalidKey = false;
-            }
-        });
+        $('#api_key').val('');
     });
     $('#ign_input').on('click', () => { ipcRenderer.send('focus', true); });
     $('#ign_input').on('focusout', function() {
