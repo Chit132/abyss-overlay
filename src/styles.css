@@ -1,3 +1,4 @@
+@import url('../node_modules/material-design-icons-iconfont/dist/material-design-icons.css');
 @font-face{
     font-family: "Minecraftia";
     src: url("../assets/Minecraftia.ttf");
@@ -247,6 +248,8 @@ div{
     outline: none;
     transform: rotate(0deg);
     filter: drop-shadow(1px 1px rgb(0, 0, 0));
+    position: relative;
+    z-index: 100;
     -webkit-app-region: no-drag;
     transition: transform 0.1s ease-in-out;
 }

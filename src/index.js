@@ -27,14 +27,14 @@ const { starColor, nameColor, wsColor, fkdrColor, wlrColor, bblrColor, finalsCol
 const { ModalWindow } = require('./modalWindow.js');
 const { PopupStats } = require('./popupStats.js');
 const { Clients } = require('./clients.js');
-const { verify } = require('crypto');
-const { first, initial } = require('lodash');
+const { Cache } = require('./cache.js');
 
 
 config.delete('players');
 const HY_API = 'https://api.hypixel.net', HY_HEADER = { 'API-Key': config.get('key', '1') };
-const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
-var players = [], numplayers = 0, goodkey = true, keyThrottle = false, apiDown = false, overlayAPIdown = false, logpath = '', goodfile = true, currentWindow = '', user = '', useruuid = config.get('uuid', undefined), sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, backendIP = process.env.BACKEND_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
+const CACHE = new Cache();
+var players = [], numplayers = 0, goodkey = true, HyThrottle = false, hypixelAPIdown = false, overlayAPIdown = false, backendThrottle = false, overlayBackendDown = false, logpath = '', goodfile = true, currentWindow = '', user = '', useruuid = config.get('uuid', undefined), sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
 function updateTags(){
@@ -80,7 +80,7 @@ function verifyKey($apiElement = false) {
             if (useruuid) initialStats(useruuid);
         }
     }, error: (jqXHR) => {
-        if (jqXHR.status === 0) apiDown = true;
+        if (jqXHR.status === 0) hypixelAPIdown = true;
         else if (jqXHR.status == 403) {
             goodkey = false;
             if ($apiElement) {
@@ -102,19 +102,28 @@ function clipboardKey($apiElement = false) {
 }
 
 function initialStats(uuid) {
-    $.ajax({type: 'GET', async: false, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
-        if (data.success === true && data.player !== null){
-            startapi = data.player;
-            starttime = new Date();
-        }
-    }});
+    if (!overlayBackendDown) {
+        $.ajax({type: 'GET', async: true, url: `${backendIP}/player?uuid=${uuid}`, success: (data) => {
+            if (data.success === true && data.player !== null) {
+                startapi = data.player;
+                starttime = new Date();
+            }
+        }});
+    } else {
+        $.ajax({type: 'GET', async: true, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
+            if (data.success === true && data.player !== null) {
+                startapi = data.player;
+                starttime = new Date();
+            }
+        }});
+    }
 }
 function verifyUUID(uuid = null) {
     if (!uuid && useruuid) {
         uuid = useruuid;
     }
     if (uuid) {
-        $.ajax({type: 'GET', async: false, url: `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`, success: (profile) => {
+        $.ajax({type: 'GET', async: true, url: `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`, success: (profile) => {
             user = profile.name;
             initialStats(uuid);
         }});
@@ -134,11 +143,42 @@ function verifyIGN(ign, $apiElement) {
     }});
 }
 
-function updateHTML(){
+function pingBackend() {
+    let callMade = Date.now();
+    $.ajax({type: 'GET', async: true, url: `${backendIP}/ping`, timeout: 3750, success: (data) => {
+        overlayBackendDown = false;
+        CACHE.setTimeoutTime(data.cache_player);
+        con.log('Backend ping ' + (Date.now() - callMade));
+        ModalWindow.open({ title: 'Connection successful!', type: 1,
+            content: 'You may start queuing games!'
+        });
+    }, error: (jqXHR) => {
+        if (jqXHR.status === 0) overlayBackendDown = true;
+        else if (jqXHR.status === 403) {
+            overlayBackendDown = true;
+            setTimeout(() => {
+                ModalWindow.open({ title: 'Developer mode', type: -1,
+                    content: 'You do not have access to the overlay backend API! Therefore, you are in development mode and should use your own <b>Hypixel API key</b>.'
+                });
+            }, 1000);
+        }
+        else if (jqXHR.status === 500) hypixelAPIdown = true;
+        updateArray();
+    }, complete: () => {
+        verifyUUID();
+    }});
+}
+
+function initialize() {
+    pingBackend();
+    verifyKey();
+}
+
+function updateHTML() {
     let namehtml = '', taghtml = ''; wshtml = '', fkdrhtml = '', wlrhtml = '', bblrhtml = '', finalshtml = '', winshtml = '';
     //con.log('changing 1');
     if (!goodfile) {namehtml += '<li style="color: #FF0000">NO CLIENT PATH FOUND</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">MISSING CLIENT LOGS FILE</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';}
-    else if (apiDown) {
+    else if (hypixelAPIdown) {
         ModalWindow.open({
             title: 'Hypixel API Down',
             content: 'The Hypixel API is currently unreachable! It may be down or under maintainence. Stats will not show up until the API is back, but the overlay can still show some nicked players',
@@ -146,48 +186,54 @@ function updateHTML(){
             class: -2
         });
     }
-    else if (!goodkey) {
-        let modalOpened = false;
-        if (HY_HEADER['API-Key'] === '1') {
-            modalOpened = ModalWindow.open({ title: "Let's Get Started!", class: -4,
-                content: `
-                    The overlay requires a <b>Hypixel API key</b> to fetch player stats.<br>
-                    <ul>
-                        <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
-                        <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
-                    </ul>
-                    <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">
-                    <ul>
-                        <li style="height: auto">Also consider providing your IGN in settings for access to more features!</li>
-                    </ul>`
-            });
-        } else {
-            modalOpened = ModalWindow.open({ title: 'Expired API Key', class: -4, type: -1,
-                content: `Your current API key has <b>expired!</b><br>
-                    <ul>
-                        <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
-                        <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
-                    </ul>
-                    <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">`
-            });
-        }
-        if (modalOpened) {
-            $('#hy-dev-portal').on('click', () => {shell.openExternal('https://developer.hypixel.net/dashboard');});
-            $('#api-key-guide').on('click', () => {shell.openExternal('https://github.com/Chit132/abyss-overlay/wiki/Hypixel-API-Keys-Guide');});
-            $('#modal_api_key').on('click', function() {
-                clipboardKey($(this));
-                if (goodkey) $(this).parent().parent().parent().remove();
-            });
-        }
-        else namehtml += '<li style="color: #FF0000">MISSING/INVALID API KEY</li>'; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>'; namehtml += `<li style="color: #FF0000">ENTER NEW KEY IN SETTINGS</li>`; taghtml += '<li style="color: #FF0000">ERROR</li>'; wshtml += '<li style="color: #FF0000">X</li>'; fkdrhtml += '<li style="color: #FF0000">X</li>'; wlrhtml += '<li style="color: #FF0000">X</li>'; bblrhtml += '<li style="color: #FF0000">X</li>'; finalshtml += '<li style="color: #FF0000">X</li>'; winshtml += '<li style="color: #FF0000">X</li>';
-    }
-    else if (keyThrottle) {
+    else if (HyThrottle) {
         ModalWindow.open({
             title: 'Hypixel API Key Throttle',
             content: 'You are looking up too many players too quickly! Hypixel has ratelimited your API key for a few minutes. Try not to search for too many players too quickly: ~300 players every 5 minutes max',
             type: -1,
             class: -1
         });
+    }
+    else if (backendThrottle) {
+        ModalWindow.open({
+            title: 'Backend API Throttle',
+            content: `You are looking up too many players too quickly! You have been ratelimited for about a minute. Try not to search for too many players too quickly: ~60 players per minute<br>
+                You may extend your ratelimit by entering your own Hypixel API key in settings!`,
+            type: -1,
+            class: -5
+        });
+    }
+    else if (overlayBackendDown) {
+        if (!goodkey) {
+            let modalOpened = ModalWindow.open({ title: "Overlay backend offline!", class: -4, type: -1, block: true,
+                content: `
+                    The Abyss Overlay backend API is <b>currently down!</b> In the meantime, you may use your own <b>Hypixel API key</b> to fetch player stats (AYOR).
+                    Otherwise, you can wait for the backend API to be back online.
+                    <ul>
+                        <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
+                        <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
+                    </ul>
+                    <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">
+                    <ul>
+                        <li style="height: auto">The backend API should be back soon!</li>
+                    </ul>`
+            });
+            if (modalOpened) {
+                $('#hy-dev-portal').on('click', () => {shell.openExternal('https://developer.hypixel.net/dashboard');});
+                $('#api-key-guide').on('click', () => {shell.openExternal('https://github.com/Chit132/abyss-overlay/wiki/Hypixel-API-Keys-Guide');});
+                $('#modal_api_key').on('click', function() {
+                    clipboardKey($(this));
+                    if (goodkey) $(this).parent().parent().parent().remove();
+                });
+            }
+        } else {
+            ModalWindow.open({ title: 'API key usage', class: -4, type: -2,
+                content: `The Abyss Overlay backend API is <b>currently down!</b> Therefore, your own Hypixel API key will be used to fetch player stats (AYOR).
+                    <ul>
+                        <li style="height: auto">The backend API should be back soon!</li>
+                    </ul>`
+            });
+        }
     }
     for (let i = 0; i < players.length; i++){
         //con.log(players[i].name);
@@ -249,7 +295,7 @@ function updateHTML(){
     //con.log('changing 3 ', Math.random());
 }
 
-function updateArray(){
+function updateArray() {
     let obj = {};
     for (let i = 0; i < players.length; i++)
         obj[players[i]['name']] = players[i];
@@ -309,141 +355,214 @@ function updateArray(){
     con.log(temp);*/
 }
 
-function playerAJAX(uuid, ign, e, guild = ''){
-    let api = '', got = false;
-    $.ajax({type: 'GET', async: true, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
-        keyThrottle = false; apiDown = false; ModalWindow.keyThrottle = false; ModalWindow.APIdown = false;
-        if (data.success === true && data.player !== null){
-            let tswlvl = -1, tdwins = -1;
-            if (data.player.displayname === ign){
-                api = data.player; api.id = uuid; got = true;
-                if (gamemode === 0){
-                    let stars = '<span>[0✫]</span>', ttaghtml = '<li>-</li>', twshtml = '<li style="color: red">?</li>', tfkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tfinalshtml = '<li>0</li>', twinshtml = '<li>0</li>';
-                    let avatar = `https://crafatar.com/avatars/${api.id}?size=48&default=MHF_Steve&overlay`;
-                    if (api.stats === undefined){}
-                    else if (api.stats.Bedwars === undefined){}
-                    else{
-                        let tfkdr = 0, twlr = 0;//tbblr = 0;
-                        if (api.achievements !== undefined && api.achievements.bedwars_level !== undefined){stars = starColor(api.achievements.bedwars_level);}
-                        if (api.stats.Bedwars[`${gmode}winstreak`] !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Bedwars[`${gmode}winstreak`])}">${api.stats.Bedwars[`${gmode}winstreak`]}</li>`;
-                        if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}final_deaths_bedwars`] !== undefined){tfkdr = parseFloat(api.stats.Bedwars[`${gmode}final_kills_bedwars`]/api.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(2); tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
-                        else if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined){tfkdr = api.stats.Bedwars[`${gmode}final_kills_bedwars`]; tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
-                        if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}losses_bedwars`] !== undefined){twlr = parseFloat(api.stats.Bedwars[`${gmode}wins_bedwars`]/api.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        else if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined){twlr = api.stats.Bedwars[`${gmode}wins_bedwars`]; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        //if (api.stats.Bedwars.beds_broken_bedwars !== undefined && api.stats.Bedwars.beds_lost_bedwars !== undefined) tbblr = parseFloat(api.stats.Bedwars.beds_broken_bedwars/api.stats.Bedwars.beds_lost_bedwars).toFixed(2); tbblrhtml = `<li style="color: ${bblrColor(tbblr)}">${tbblr}</li>`;
-                        if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined) tfinalshtml = `<li style="color: ${finalsColor(api.stats.Bedwars[`${gmode}final_kills_bedwars`])}">${api.stats.Bedwars[`${gmode}final_kills_bedwars`]}</li>`;
-                        if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.Bedwars[`${gmode}wins_bedwars`])}">${api.stats.Bedwars[`${gmode}wins_bedwars`]}</li>`;
-                    }
-                    if (e === 1) api.inParty = true;
-                    else if (e === 2) api.call = true;
-                    else if (e === 3) api.partyReq = true;
-                    else if (e === 4) api.friendReq = true;
-                    else if (e === 5) api.guildList = true;
-                    ttaghtml = getTag(api, tagslist);
-                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${stars} ${nameColor(api)}${guild}</li>`;
-                    players.push({name: ign, api: api, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tfkdrhtml, wlrhtml: twlrhtml, finalshtml: tfinalshtml, winshtml: twinshtml});
-                }
-                else if (gamemode === 1){
-                    let level = '<span>[0⚔]</span>', ttaghtml = '<li>-</li>', tnwlhtml = '<li>0</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
-                    let avatar = `https://crafatar.com/avatars/${api.id}?size=48&default=MHF_Steve&overlay`;
-                    tswlvl = 0;
-                    if (api.stats === undefined){}
-                    else if (api.stats.SkyWars === undefined){}
-                    else{
-                        let tkdr = 0, twlr = 0;
-                        if (api.stats.SkyWars.skywars_experience !== undefined){
-                            let lvl = swLVL(api.stats.SkyWars.skywars_experience);
-                            level = starColor(lvl); tswlvl = lvl;
-                        }
-                        if (api.networkExp !== undefined){let tnwl = NWL(api.networkExp); tnwlhtml = `<li style="color: ${wsColor(tnwl)}">${tnwl}</li>`;}
-                        if (api.stats.SkyWars.kills !== undefined && api.stats.SkyWars.deaths !== undefined){tkdr = parseFloat(api.stats.SkyWars.kills/api.stats.SkyWars.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
-                        else if (api.stats.SkyWars.kills !== undefined){tkdr = api.stats.SkyWars.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
-                        if (api.stats.SkyWars.wins !== undefined && api.stats.SkyWars.losses !== undefined){twlr = parseFloat(api.stats.SkyWars.wins/api.stats.SkyWars.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        else if (api.stats.SkyWars.wins !== undefined){twlr = api.stats.SkyWars.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        if (api.stats.SkyWars.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.SkyWars.kills)}">${api.stats.SkyWars.kills}</li>`;
-                        if (api.stats.SkyWars.wins !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.SkyWars.wins)}">${api.stats.SkyWars.wins}</li>`;
-                    }
-                    if (e === 1) api.inParty = true;
-                    else if (e === 2) api.call = true;
-                    else if (e === 3) api.partyReq = true;
-                    else if (e === 4) api.friendReq = true;
-                    else if (e === 5) api.guildList = true;
-                    ttaghtml = getTag(api, tagslist);
-                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
-                    players.push({name: ign, api: api, swlvl: tswlvl, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: tnwlhtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
-                }
-                else if (gamemode === 2){
-                    let level = '<span>[I]</span>', ttaghtml = '<li>-</li>', twshtml = '<li style="color: red">?</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
-                    let avatar = `https://crafatar.com/avatars/${api.id}?size=48&default=MHF_Steve&overlay`;
-                    tdwins = 0;
-                    if (api.stats === undefined){}
-                    else if (api.stats.Duels === undefined){}
-                    else{
-                        let tkdr = 0, twlr = 0;
-                        if (api.stats.Duels.wins !== undefined){level = starColor(api.stats.Duels.wins); twinshtml = `<li style="color: ${winsColor(api.stats.Duels.wins)}">${api.stats.Duels.wins}</li>`; tdwins = api.stats.Duels.wins;}
-                        if (api.stats.Duels.current_winstreak !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Duels.current_winstreak)}">${api.stats.Duels.current_winstreak}</li>`;
-                        if (api.stats.Duels.kills !== undefined && api.stats.Duels.deaths !== undefined){tkdr = parseFloat(api.stats.Duels.kills/api.stats.Duels.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
-                        else if (api.stats.Duels.kills !== undefined){tkdr = api.stats.Duels.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
-                        if (api.stats.Duels.wins !== undefined && api.stats.Duels.losses !== undefined){twlr = parseFloat(api.stats.Duels.wins/api.stats.Duels.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        else if (api.stats.Duels.wins !== undefined){twlr = api.stats.Duels.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
-                        if (api.stats.Duels.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.Duels.kills)}">${api.stats.Duels.kills}</li>`;
-                    }
-                    if (e === 1) api.inParty = true;
-                    else if (e === 2) api.call = true;
-                    else if (e === 3) api.partyReq = true;
-                    else if (e === 4) api.friendReq = true;
-                    else if (e === 5) api.guildList = true;
-                    ttaghtml = getTag(api, tagslist);
-                    let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
-                    players.push({name: ign, api: api, dwins: tdwins, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
-                }
-            }
-            else{got = true; players.push({name: ign, namehtml: ign, api: null});}
-            updateArray();
+function appendPlayer(ign, api, options, guild = '') {
+    if (!api) return players.push({name: ign, namehtml: ign, api: null});
+
+    let ttaghtml = '<li>-</li>';
+    if (options.meta === 1) api.inParty = true;
+    else if (options.meta === 2) api.call = true;
+    else if (options.meta === 3) api.partyReq = true;
+    else if (options.meta === 4) api.friendReq = true;
+    else if (options.meta === 5) api.guildList = true;
+    ttaghtml = getTag(api, tagslist);
+    let avatar = `https://crafatar.com/avatars/${api.uuid}?size=48&default=MHF_Steve&overlay`;
+    if (gamemode === 0) {
+        let stars = '<span>[0✫]</span>', twshtml = '<li style="color: red">?</li>', tfkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tfinalshtml = '<li>0</li>', twinshtml = '<li>0</li>';
+        if (api.stats === undefined){}
+        else if (api.stats.Bedwars === undefined){}
+        else{
+            let tfkdr = 0, twlr = 0;//tbblr = 0;
+            if (api.achievements !== undefined && api.achievements.bedwars_level !== undefined){stars = starColor(api.achievements.bedwars_level);}
+            if (api.stats.Bedwars[`${gmode}winstreak`] !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Bedwars[`${gmode}winstreak`])}">${api.stats.Bedwars[`${gmode}winstreak`]}</li>`;
+            if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}final_deaths_bedwars`] !== undefined){tfkdr = parseFloat(api.stats.Bedwars[`${gmode}final_kills_bedwars`]/api.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(2); tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
+            else if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined){tfkdr = api.stats.Bedwars[`${gmode}final_kills_bedwars`]; tfkdrhtml = `<li style="color: ${fkdrColor(tfkdr)}">${tfkdr}</li>`;}
+            if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined && api.stats.Bedwars[`${gmode}losses_bedwars`] !== undefined){twlr = parseFloat(api.stats.Bedwars[`${gmode}wins_bedwars`]/api.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            else if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined){twlr = api.stats.Bedwars[`${gmode}wins_bedwars`]; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            //if (api.stats.Bedwars.beds_broken_bedwars !== undefined && api.stats.Bedwars.beds_lost_bedwars !== undefined) tbblr = parseFloat(api.stats.Bedwars.beds_broken_bedwars/api.stats.Bedwars.beds_lost_bedwars).toFixed(2); tbblrhtml = `<li style="color: ${bblrColor(tbblr)}">${tbblr}</li>`;
+            if (api.stats.Bedwars[`${gmode}final_kills_bedwars`] !== undefined) tfinalshtml = `<li style="color: ${finalsColor(api.stats.Bedwars[`${gmode}final_kills_bedwars`])}">${api.stats.Bedwars[`${gmode}final_kills_bedwars`]}</li>`;
+            if (api.stats.Bedwars[`${gmode}wins_bedwars`] !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.Bedwars[`${gmode}wins_bedwars`])}">${api.stats.Bedwars[`${gmode}wins_bedwars`]}</li>`;
         }
-        else if (api.player == null){got = true; players.push({name: ign, namehtml: ign, api: null}); updateArray();}
+        let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${stars} ${nameColor(api)}${guild}</li>`;
+        players.push({name: ign, api: api, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tfkdrhtml, wlrhtml: twlrhtml, finalshtml: tfinalshtml, winshtml: twinshtml});
+    }
+    else if (gamemode === 1) {
+        let level = '<span>[0⚔]</span>', ttaghtml = '<li>-</li>', tnwlhtml = '<li>0</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
+        let tswlvl = 0;
+        if (api.stats === undefined){}
+        else if (api.stats.SkyWars === undefined){}
+        else{
+            let tkdr = 0, twlr = 0;
+            if (api.stats.SkyWars.skywars_experience !== undefined){
+                let lvl = swLVL(api.stats.SkyWars.skywars_experience);
+                level = starColor(lvl); tswlvl = lvl;
+            }
+            if (api.networkExp !== undefined){let tnwl = NWL(api.networkExp); tnwlhtml = `<li style="color: ${wsColor(tnwl)}">${tnwl}</li>`;}
+            if (api.stats.SkyWars.kills !== undefined && api.stats.SkyWars.deaths !== undefined){tkdr = parseFloat(api.stats.SkyWars.kills/api.stats.SkyWars.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+            else if (api.stats.SkyWars.kills !== undefined){tkdr = api.stats.SkyWars.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+            if (api.stats.SkyWars.wins !== undefined && api.stats.SkyWars.losses !== undefined){twlr = parseFloat(api.stats.SkyWars.wins/api.stats.SkyWars.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            else if (api.stats.SkyWars.wins !== undefined){twlr = api.stats.SkyWars.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            if (api.stats.SkyWars.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.SkyWars.kills)}">${api.stats.SkyWars.kills}</li>`;
+            if (api.stats.SkyWars.wins !== undefined) twinshtml = `<li style="color: ${winsColor(api.stats.SkyWars.wins)}">${api.stats.SkyWars.wins}</li>`;
+        }
+        let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
+        players.push({name: ign, api: api, swlvl: tswlvl, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: tnwlhtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
+    }
+    else if (gamemode === 2) {
+        let level = '<span>[I]</span>', ttaghtml = '<li>-</li>', twshtml = '<li style="color: red">?</li>', tkdrhtml = '<li>0</li>', twlrhtml = '<li>0</li>', tkillshtml = '<li>0</li>', twinshtml = '<li>0</li>';
+        let tdwins = 0;
+        if (api.stats === undefined){}
+        else if (api.stats.Duels === undefined){}
+        else{
+            let tkdr = 0, twlr = 0;
+            if (api.stats.Duels.wins !== undefined){level = starColor(api.stats.Duels.wins); twinshtml = `<li style="color: ${winsColor(api.stats.Duels.wins)}">${api.stats.Duels.wins}</li>`; tdwins = api.stats.Duels.wins;}
+            if (api.stats.Duels.current_winstreak !== undefined) twshtml = `<li style="color: ${wsColor(api.stats.Duels.current_winstreak)}">${api.stats.Duels.current_winstreak}</li>`;
+            if (api.stats.Duels.kills !== undefined && api.stats.Duels.deaths !== undefined){tkdr = parseFloat(api.stats.Duels.kills/api.stats.Duels.deaths).toFixed(2); tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+            else if (api.stats.Duels.kills !== undefined){tkdr = api.stats.Duels.kills; tkdrhtml = `<li style="color: ${fkdrColor(tkdr)}">${tkdr}</li>`;}
+            if (api.stats.Duels.wins !== undefined && api.stats.Duels.losses !== undefined){twlr = parseFloat(api.stats.Duels.wins/api.stats.Duels.losses).toFixed(2); twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            else if (api.stats.Duels.wins !== undefined){twlr = api.stats.Duels.wins; twlrhtml = `<li style="color: ${wlrColor(twlr)}">${twlr}</li>`;}
+            if (api.stats.Duels.kills !== undefined) tkillshtml = `<li style="color: ${finalsColor(api.stats.Duels.kills)}">${api.stats.Duels.kills}</li>`;
+        }
+        let tnamehtml = `<li style="background: url(${avatar}) no-repeat left center; background-size: 20px; padding-left: 25px;" class="player_ign ${ign}">${level} ${nameColor(api)}${guild}</li>`;
+        players.push({name: ign, api: api, dwins: tdwins, namehtml: tnamehtml, avatar: avatar, taghtml: ttaghtml, wshtml: twshtml, fkdrhtml: tkdrhtml, wlrhtml: twlrhtml, finalshtml: tkillshtml, winshtml: twinshtml});
+    }
+    updateArray();
+}
+
+function playerAJAX(uuid, ign, options, guild = '') {
+    let api = '';
+    $.ajax({type: 'GET', async: true, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
+        HyThrottle = false; hypixelAPIdown = false; ModalWindow.HyThrottle = false; ModalWindow.APIdown = false;
+        if (data.success === true && data.player !== null) {
+            if (data.player.displayname === ign) {
+                // con.log('got from hypixel: ' + ign)
+                api = data.player;
+                api.uuid = uuid; api.guild = guild;
+                CACHE.set(ign, api);
+                appendPlayer(ign, api, options, guild);
+            }
+            else{
+                players.push({name: ign, namehtml: ign, api: null});
+                updateArray();
+            }
+        }
+        else if (api.player == null){players.push({name: ign, namehtml: ign, api: null}); updateArray();}
     }, error: (jqXHR) => {
-        got = false;
-        if (jqXHR.status === 0) apiDown = true; 
+        if (jqXHR.status === 0) hypixelAPIdown = true; 
         else if (jqXHR.status === 403) goodkey = false;
-        else if (jqXHR.status === 429) keyThrottle = true;
-        else {apiDown = true; players.push({name: ign, namehtml: ign, api: null})};
+        else if (jqXHR.status === 429) HyThrottle = true;
+        else {hypixelAPIdown = true; players.push({name: ign, namehtml: ign, api: null})};
         updateArray();
     }});
 }
 
-function addPlayer(ign = '', e = 0) {
-    let uuid = '';
-    console.log(`Adding player: ${ign}`);
-    $.ajax({type: 'GET', async: true, url: mojang+ign, success: (data, status) => {
-        if (status === 'success'){
-            uuid = data.id; ign = data.name;
-            if (guildtag) {
+function fetchPlayer_hypixel(uuid, ign, options) {
+    if (!goodkey) {
+        players.push({name: ign, namehtml: ign, api: null});
+        return updateArray();
+    }
+    if (guildtag) {
+        $.ajax({type: 'GET', async: true, url: `${HY_API}/guild?player=${uuid}`, headers: HY_HEADER, success: (data) => {
+            if (data.success === true && data.guild) {
                 let guild = '';
-                $.ajax({type: 'GET', async: true, url: `${HY_API}/guild?player=${uuid}`, headers: HY_HEADER, success: (data) => {
-                    if (data.success === true && data.guild) {
-                        if (data.success === true && data.guild){
-                            if (data.guild.tag) guild = ` <span style="color: ${HypixelColors[data.guild.tagColor]}">[${data.guild.tag}]</span>`;
-                        }
-                        playerAJAX(uuid, ign, e, guild);
-                    }
-                    else playerAJAX(uuid, ign, e, guild);
-                }, error: () => {
-                    playerAJAX(uuid, ign, e, guild);
-                }});
+                if (data.guild && data.guild.tag) {
+                    guild = ` <span style="color: ${HypixelColors[data.guild.tagColor || 'DARK_GRAY']}">[${data.guild.tag}]</span>`;
+                }
+                playerAJAX(uuid, ign, options, guild);
+            }
+            else playerAJAX(uuid, ign, options);
+        }, error: () => {
+            playerAJAX(uuid, ign, options);
+        }});
+    }
+    else {
+        playerAJAX(uuid, ign, options);
+    }
+}
+
+function fetchPlayer_backend(uuid, ign, options) {
+    $.ajax({type: 'GET', async: true, url: `${backendIP}/player?uuid=${uuid}`, success: (data) => {
+        backendThrottle = false; overlayBackendDown = false; ModalWindow.backendThrottle = false; ModalWindow.APIdown = false;
+        if (data.success === true && data.player !== null) {
+            if (data.player.displayname === ign) {
+                // con.log('got from backend: ' + ign)
+                api = data.player;
+                api.uuid = uuid;
+                let guild = '';
+                if (data.guild && data.guild.tag) {
+                    guild = ` <span style="color: ${HypixelColors[data.guild.tagColor || 'DARK_GRAY']}">[${data.guild.tag}]</span>`;
+                }
+                api.guild = guild;
+                CACHE.set(ign, api);
+                appendPlayer(ign, api, options, guild);
             }
             else {
-                playerAJAX(uuid, ign, e);
+                players.push({name: ign, namehtml: ign, api: null});
+                updateArray();
+            }
+        }
+        else if (data.player == null){players.push({name: ign, namehtml: ign, api: null}); updateArray();}
+    }, error: (jqXHR) => {
+        if (jqXHR.status === 0) overlayBackendDown = true;
+        else if (jqXHR.status === 429) {
+            con.log('limited: ' + ign)
+            if (!backendThrottle) {
+                backendThrottle = true;
+                con.log('backend ratelimited for seconds: ' + jqXHR.getResponseHeader('x-ratelimit-reset'));
+                setTimeout(() => {
+                    backendThrottle = false;
+                    con.log('backend ratelimit lifted');
+                }, !jqXHR.getResponseHeader('x-ratelimit-reset') ? 60000 : parseInt(jqXHR.getResponseHeader('x-ratelimit-reset')) * 1000);
+            }
+            if (config.get('settings.useFallbackKey', true)) {
+                fetchPlayer_hypixel(uuid, ign, options);
+                return;
+            }
+        }
+        else if (jqXHR.status === 500) hypixelAPIdown = true;
+        else {overlayBackendDown = true; players.push({name: ign, namehtml: ign, api: null})};
+        updateArray();
+    }});
+}
+
+function fetchPlayer(ign, options = {}) {
+    console.log(`Fetching player: ${ign}`);
+    $.ajax({type: 'GET', async: true, url: mojang + ign, success: (data, status) => {
+        if (status === 'success') {
+            if (!overlayBackendDown) {
+                if (backendThrottle) {
+                    if (config.get('settings.useFallbackKey', true)) fetchPlayer_hypixel(data.id, data.name, options);
+                }
+                else fetchPlayer_backend(data.id, data.name, options);
+            } else {
+                fetchPlayer_hypixel(data.id, data.name, options);
             }
         } else {
             players.push({name: ign, namehtml: ign, api: null});
             updateArray();
         }
     }, error: () => {
+        CACHE.set(ign, null);
         players.push({name: ign, namehtml: ign, api: null});
         updateArray();
         console.error('error with mojang api GET uuid');
     }});
+}
+
+function addPlayer(ign = undefined, options = { skipCache: false }) {
+    if (!ign) return false;
+
+    options.meta ||= 0;
+    if (!options.skipCache) {
+        let data = CACHE.get(ign);
+        if (data === false) {
+            fetchPlayer(ign, options);
+        } else {
+            if (!data) appendPlayer(ign, null, options);
+            else appendPlayer(ign, data, options, data.guild);
+        }
+    } else {
+        fetchPlayer(ign, options);
+    }
 }
 
 function showRotation(matrix){
@@ -644,8 +763,7 @@ function main(event){
         return detected;
     }
 
-    verifyKey();
-    verifyUUID();
+    initialize();
 
     const tail = new Tail(logpath, {/*logger: con, */useWatchFile: true, nLines: 1, fsWatchOptions: {interval: 100}});
     tail.on('line', (data) => {
@@ -702,10 +820,10 @@ function main(event){
                 if ($('#infodiv').css('display') === 'none' && $('#settingsdiv').css('display') === 'none'){$('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block');}
                 let contains = false;
                 for (let i = 0; i < players.length; i++){if (user === players[i].name){contains = true;}}
-                if (!contains) addPlayer(user, 1);
+                if (!contains) addPlayer(user, { meta: 1 });
                 contains = false;
                 for (let i = 0; i < players.length; i++){if (pjoin === players[i].name){contains = true;}}
-                if (!contains) addPlayer(pjoin, 1);
+                if (!contains) addPlayer(pjoin, { meta: 1 });
             }
             else if (msg.indexOf('You left the party') !== -1 && msg.indexOf(':') === -1 && inlobby){players = []; updateArray();}
             else if (msg.indexOf('left the party') !== -1 && msg.indexOf(':') === -1 && inlobby){
@@ -732,7 +850,7 @@ function main(event){
                     for (let j = 0; j < players.length; j++){
                         if (players[j].name === tplayers[i]) contains = true;
                     }
-                    if (!contains) addPlayer(tplayers[i], 1);
+                    if (!contains) addPlayer(tplayers[i], { meta: 1 });
                 }
                 for (let i = 0; i < players.length; i++){
                     if (!tplayers.includes(players[i].name)){players.splice(i, 1); changed = true; updateArray();}
@@ -755,7 +873,7 @@ function main(event){
                             let contains = false;
                             for (let i = 0; i < players.length; i++){if (players[i].name === tmsgarray[i]){contains = true;}}
                             if (!contains){
-                                addPlayer(tmsgarray[i], 2);
+                                addPlayer(tmsgarray[i], { meta: 2 });
                                 if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, winheight, true); $('#show').css('transform', 'rotate(0deg)');}
                                 if ($('#infodiv').css('display') === 'none' && $('#settingsdiv').css('display') === 'none'){$('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block');}
                             }
@@ -769,7 +887,7 @@ function main(event){
                 if ((wsearch.toLowerCase() === 'me') || (wsearch.toLowerCase() === "i")) wsearch = user;
                 for (let i = 0; i < players.length; i++){if (wsearch.toLowerCase() === players[i].name.toLowerCase()){contains = true;}}
                 if (!contains){
-                    addPlayer(wsearch);
+                    addPlayer(wsearch, { skipCache: true });
                     if (config.get('settings.shrink', true)){currentWindow.setSize(currentWindow.webContents.getOwnerBrowserWindow().getBounds().width, winheight, true); $('#show').css('transform', 'rotate(0deg)');}
                     if ($('#infodiv').css('display') === 'none' && $('#settingsdiv').css('display') === 'none'){$('#titles').css('display', 'block'); $('#indexdiv').css('display', 'block');}
                 }
@@ -792,8 +910,8 @@ function main(event){
                 else tmsgarray = msg.split(' ?  ');
                 for (let i = 0; i < tmsgarray.length; i++){
                     //con.log(tmsgarray[i]);
-                    if (tmsgarray[i][0] === '[') addPlayer(tmsgarray[i].substring(tmsgarray[i].indexOf(' ')+1), 5);
-                    else addPlayer(tmsgarray[i], 5);
+                    if (tmsgarray[i][0] === '[') addPlayer(tmsgarray[i].substring(tmsgarray[i].indexOf(' ')+1), { meta: 5 });
+                    else addPlayer(tmsgarray[i], { meta: 5 });
                 }
             }
             else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', false)}, 10000);}
@@ -875,13 +993,13 @@ function main(event){
             let msg = data;
             if (config.get('settings.call', true) && inlobby && msg.indexOf('to join their party!') !== -1 && msg.indexOf(':') === -1){
                 let tmsg = msg.substring(0, msg.indexOf('has')-1), tmsgarray = tmsg.split(' ');
-                if (tmsgarray[0].indexOf('[') !== -1) addPlayer(tmsgarray[1], 3);
-                else addPlayer(tmsgarray[0], 3);
+                if (tmsgarray[0].indexOf('[') !== -1) addPlayer(tmsgarray[1], { meta: 3 });
+                else addPlayer(tmsgarray[0], { meta: 3 });
             }
             else if (config.get('settings.call', true) && inlobby && msg.indexOf('Friend request from') === 0 && msg.indexOf(':') === -1){
                 //con.log('hi');
                 let tmsgarray = msg.split(' ');
-                addPlayer(tmsgarray[tmsgarray.length-1], 4);
+                addPlayer(tmsgarray[tmsgarray.length-1], { meta: 4 });
             }
         }
     });
@@ -968,7 +1086,7 @@ $(() => {
     });
     $('#settings').on('click', () => {
         if ($('#settingsdiv').css('display') === 'none'){
-            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', true)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); $('#whobtn').prop('checked', config.get('settings.autowho', false));
+            $('#settings').css('background-image', 'url(../assets/settings2.png)'); $('#info').css('background-image', 'url(../assets/info1.png)'); $('#session').css('background-image', 'url(../assets/session1.png)'); $('#music').css('background-image', 'url(../assets/music1.png)'); $('#titles').css('display', 'none'); $('#indexdiv').css('display', 'none'); $('#settingsdiv').css('display', 'inline-block'); $('#infodiv').css('display', 'none'); $('#sessiondiv').css('display', 'none'); $('#musicdiv').css('display', 'none'); $('#minimizeinfo').css('display', 'block'); $('#notifsbtn').prop('checked', config.get('settings.notifs', true)); $('#shrinkbtn').prop('checked', config.get('settings.shrink', true)); $('#gtagbtn').prop('checked', config.get('settings.gtag', true)); $('#fbkeybtn').prop('checked', config.get('settings.useFallbackKey', true)); $('#callbtn').prop('checked', config.get('settings.call', true)); $('#rpcbtn').prop('checked', config.get('settings.rpc', true)); $('#whobtn').prop('checked', config.get('settings.autowho', false));
             let tgmode = config.get('settings.bwgmode', ''), tgamemode = config.get('settings.gamemode', 0), trpc = config.get('settings.rpc_stats', 1);
             if (tgmode === '' || tgmode === undefined){$('#overall').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Overall');}
             else if (tgmode === 'eight_one_'){$('#solos').addClass('selected'); $('#gmbtn').find('.custom-select').find('.custom-select_trigger').find('span').html('Solos');}
@@ -1045,23 +1163,12 @@ $(() => {
 
     ipcRenderer.on('test', (event, ...arg) => {
         console.log('test');
-        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', 'KidsAreAnnoying', 'Divinah', '86tops', 'ip_man', 'm_lly', 'Jamelius', 'Ribskitz'];
+        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'zryp', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', 'Rexisflying', 'Divinah', '86tops', 'ip_man', 'm_lly', 'WarOG'];
         for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
 
         //ipcRenderer.send('autowho');
 
-        $.ajax({type: 'GET', async: true, url: `http://tags.abyssoverlay.com:26598/gimmeusers`, success: (data) => {
-            console.log('success');
-            apiDown = false; keyThrottle = false;
-        }, error: (jqXHR) => {
-            console.log(jqXHR);
-            if (jqXHR.status === 0) apiDown = true; 
-            else if (jqXHR.status === 403) goodkey = false;
-            else if (jqXHR.status === 429) keyThrottle = true;
-            else players.push({name: ign, namehtml: ign, api: null});
-            updateArray();
-        }});
-
+        // MODAL WINDOW USAGE
         // ModalWindow.open({
         //     title: 'Hello modal window',
         //     content: 'Please tell me this modal window actually worked dude. I tried something new with JS and am hoping this works first try', // optional
@@ -1174,8 +1281,11 @@ $(() => {
         config.set('settings.shrink', $('#shrinkbtn').prop('checked'));
     });
     $('#gtagbtn').on('click', () => {
-        config.set('settings.gtag', $('#gtagbtn').prop('checked'));
+        config.set('settings.gtag', $('#gtagbtn').prop('checked'));$('#fbkeybtn').prop('checked', config.get('settings.useFallbackKey', true));
         guildtag = $('#gtagbtn').prop('checked');
+    });
+    $('#fbkeybtn').on('click', () => {
+        config.set('settings.useFallbackKey', $('#fbkeybtn').prop('checked'));
     });
     $('#callbtn').on('click', () => {
         config.set('settings.call', $('#callbtn').prop('checked'));
@@ -1194,27 +1304,12 @@ $(() => {
     $('#revert_api-key').on('click', function() {
         ModalWindow.invalidKey = false;
         ModalWindow.open({ title: "API Key Successfully Reset!", class: -4,
-            content: `
-                You have <b>removed</b> your Hypixel API Key from the overlay! The overlay requires an API key to operate.
-                <ul>
-                    <li style="height: auto">Generate a new API key <a id="hy-dev-portal">here</a> and paste it below.</li>
-                    <li style="height: auto">For more information, follow <a id="api-key-guide">this</a> guide.</li>
-                </ul>
-                <input type="text" class="api_key__input" id="modal_api_key" name="Hypixel API Key" maxlength="36" size="36" placeholder="Click to paste API key">
-            `
+            content: 'You have <b>removed</b> your Hypixel API Key from the overlay!'
         });
         goodkey = false;
         config.delete('key');
         HY_HEADER['API-Key'] = '1';
-        $('#hy-dev-portal').on('click', () => {shell.openExternal('https://developer.hypixel.net/dashboard');});
-        $('#api-key-guide').on('click', () => {shell.openExternal('https://github.com/Chit132/abyss-overlay/wiki/Hypixel-API-Keys-Guide');});
-        $('#modal_api_key').on('click', function() {
-            clipboardKey($('#api-key'));
-            if (goodkey) {
-                $(this).parent().parent().parent().remove();
-                ModalWindow.invalidKey = false;
-            }
-        });
+        $('#api_key').val('');
     });
     $('#ign_input').on('click', () => { ipcRenderer.send('focus', true); });
     $('#ign_input').on('focusout', function() {
@@ -1456,109 +1551,128 @@ $(() => {
         }
     }
 
-    function updateSession(startapi, e = 0){
-        let sessionHTML = '', startplayer = startapi;
-        $.ajax({type: 'GET', url: `${HY_API}/player?uuid=${useruuid}`, headers: HY_HEADER, success: (data) => {
-            try{
-                $('#sessionavatar').attr('src', `https://crafatar.com/avatars/${useruuid}?size=100&default=MHF_Steve&overlay`);
-                if (data.success === true && data.player !== null){
-                    let newplayer = data.player;
-                    $('#sessionign').html(nameColor(newplayer));
-                    if (gamemode === 0){
-                        if (e === 1){
-                            rpcActivity.details = 'Bedwars';
-                            rpcActivity.assets.small_image = 'bedwars'; rpcActivity.assets.small_text = 'Playing Bedwars'; rpcActivity.state = "Just chillin'";
-                            if (config.get('settings.rpc_stats', 1) === 1){
-                                let tfinals = newplayer.stats.Bedwars.final_kills_bedwars-startplayer.stats.Bedwars.final_kills_bedwars, tbeds = newplayer.stats.Bedwars.beds_broken_bedwars-startplayer.stats.Bedwars.beds_broken_bedwars, twins = newplayer.stats.Bedwars.wins_bedwars-startplayer.stats.Bedwars.wins_bedwars;
-                                if (tfinals+tbeds+twins !== 0) rpcActivity.state = `Finals: ${tfinals} | Beds: ${tbeds} | Wins: ${twins}`;
-                                rpcActivity.details += ` [${newplayer.achievements.bedwars_level}✫]`;
-                            }
-                            else if (config.get('settings.rpc_stats', 1) === 2){
-                                rpcActivity.state = `FKDR: ${parseFloat(newplayer.stats.Bedwars[`${gmode}final_kills_bedwars`]/newplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(2)} | WLR: ${parseFloat(newplayer.stats.Bedwars[`${gmode}wins_bedwars`]/newplayer.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(2)} | BBLR: ${parseFloat(newplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`]/newplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`]).toFixed(2)}`;
-                                rpcActivity.details += ` [${newplayer.achievements.bedwars_level}✫]`;
-                            }
-                            return rpc.request('SET_ACTIVITY', {pid: process.pid, activity: rpcActivity}).catch(console.error);
-                        }
+    function updateSessionHTML(startplayer, newplayer, e = 0) {
+        if (!startplayer || !newplayer) return;
 
-                        let bwmode = 'Overall';
-                        if (gmode.includes('_one')) bwmode = 'Solos';
-                        else if (gmode.includes('_two')) bwmode = 'Doubles';
-                        else if (gmode.includes('_three')) bwmode = 'Threes';
-                        else if (gmode.includes('_four')) bwmode = 'Fours';
-                        $('#sessiontitle').html(`Bedwars ${bwmode} Session Stats`);
-
-                        sessionHTML += `<span class="greengradient">Stars:</span> &nbsp;${sessionNumHTML(parseFloat(getBedWarsLevel(startplayer.stats.Bedwars.Experience)).toFixed(2), parseFloat(getBedWarsLevel(newplayer.stats.Bedwars.Experience)).toFixed(2), 'lvl')}<br><br>`;
-                        sessionHTML += `<span class="greengradient">Winstreak:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}winstreak`], newplayer.stats.Bedwars[`${gmode}winstreak`])}<br><br>`;
-                        sessionHTML += `<span class="greengradient">Final Kills:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}final_kills_bedwars`], newplayer.stats.Bedwars[`${gmode}final_kills_bedwars`])}<br>`;
-                        sessionHTML += `<span class="redgradient">Final Deaths:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`], newplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`], 1)}<br>`;
-                        sessionHTML += `<span class="yellowgradient">FKDR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Bedwars[`${gmode}final_kills_bedwars`]/startplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(3), parseFloat(newplayer.stats.Bedwars[`${gmode}final_kills_bedwars`]/newplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(3))}<br><br>`;
-                        sessionHTML += `<span class="greengradient">Wins:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}wins_bedwars`], newplayer.stats.Bedwars[`${gmode}wins_bedwars`])}<br>`;
-                        sessionHTML += `<span class="redgradient">Losses:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}losses_bedwars`], newplayer.stats.Bedwars[`${gmode}losses_bedwars`], 1)}<br>`;
-                        sessionHTML += `<span class="yellowgradient">WLR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Bedwars[`${gmode}wins_bedwars`]/startplayer.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(3), parseFloat(newplayer.stats.Bedwars[`${gmode}wins_bedwars`]/newplayer.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(3))}<br><br>`;
-                        sessionHTML += `<span class="greengradient">Beds Broken:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`], newplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`])}<br>`;
-                        sessionHTML += `<span class="redgradient">Beds Lost:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`], newplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`], 1)}<br>`;
-                        sessionHTML += `<span class="yellowgradient">BBLR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`]/startplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`]).toFixed(3), parseFloat(newplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`]/newplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`]).toFixed(3))}<br><br>`;
-                    }
-                    else if (gamemode === 1){
-                        if (e === 1){
-                            rpcActivity.details = 'Skywars';
-                            rpcActivity.assets.small_image = 'skywars'; rpcActivity.assets.small_text = 'Playing Skywars'; rpcActivity.state = "Just chillin'";
-                            if (config.get('settings.rpc_stats', 1) === 1){
-                                let tkills = newplayer.stats.SkyWars.kills-startplayer.stats.SkyWars.kills, twins = newplayer.stats.SkyWars.wins-startplayer.stats.SkyWars.wins;
-                                if (tkills+twins !== 0) rpcActivity.state = `Kills: ${tkills} | Wins: ${twins}`;
-                                rpcActivity.details += ` [${swLVL(newplayer.stats.SkyWars.skywars_experience)}✬]`;
-                            }
-                            else if (config.get('settings.rpc_stats', 1) === 2){
-                                rpcActivity.state = `KDR: ${parseFloat(newplayer.stats.SkyWars.kills/newplayer.stats.SkyWars.deaths).toFixed(2)} | WLR: ${parseFloat(newplayer.stats.SkyWars.wins/newplayer.stats.SkyWars.losses).toFixed(2)} | Kills: ${newplayer.stats.SkyWars.kills}`;
-                                rpcActivity.details += ` [${swLVL(newplayer.stats.SkyWars.skywars_experience)}✬]`;
-                            }
-                            return rpc.request('SET_ACTIVITY', {pid: process.pid, activity: rpcActivity}).catch(console.error);
-                        }
-
-                        $('#sessiontitle').html(`Skywars Session Stats`);
-
-                        sessionHTML += `<span class="greengradient">Level:</span> &nbsp;${sessionNumHTML(swLVL(startplayer.stats.SkyWars.skywars_experience), swLVL(newplayer.stats.SkyWars.skywars_experience), 'lvl')}<br><br>`;
-                        sessionHTML += `<span class="greengradient">Kills:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.kills, newplayer.stats.SkyWars.kills)}<br>`;
-                        sessionHTML += `<span class="redgradient">Deaths:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.deaths, newplayer.stats.SkyWars.deaths, 1)}<br>`;
-                        sessionHTML += `<span class="yellowgradient">KDR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.SkyWars.kills/startplayer.stats.SkyWars.deaths).toFixed(3), parseFloat(newplayer.stats.SkyWars.kills/newplayer.stats.SkyWars.deaths).toFixed(3))}<br><br>`;
-                        sessionHTML += `<span class="greengradient">Wins:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.wins, newplayer.stats.SkyWars.wins)}<br>`;
-                        sessionHTML += `<span class="redgradient">Losses:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.losses, newplayer.stats.SkyWars.losses, 1)}<br>`;
-                        sessionHTML += `<span class="yellowgradient">WLR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.SkyWars.wins/startplayer.stats.SkyWars.losses).toFixed(3), parseFloat(newplayer.stats.SkyWars.wins/newplayer.stats.SkyWars.losses).toFixed(3))}<br><br>`;
-                        sessionHTML += `<span class="greengradient">Heads:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.heads, newplayer.stats.SkyWars.heads)}<br>`;
-                    }
-                    else if (gamemode === 2){
-                        if (e === 1){
-                            rpcActivity.details = `Duels`;
-                            rpcActivity.assets.small_image = 'duels'; rpcActivity.assets.small_text = 'Playing Duels'; rpcActivity.state = "Just chillin'";
-                            if (config.get('settings.rpc_stats', 1) === 1){
-                                let twins = newplayer.stats.Duels.wins-startplayer.stats.Duels.wins, tws = startplayer.stats.Duels.current_winstreak;
-                                if (twins+tws !== 0) rpcActivity.state = `Wins: ${twins} | Winstreak: ${tws}`;
-                            }
-                            else if (config.get('settings.rpc_stats', 1) === 2){
-                                rpcActivity.state = `Wins: ${newplayer.stats.Duels.wins} | Best Winstreak: ${newplayer.stats.Duels.best_overall_winstreak}`;
-                            }
-                            return rpc.request('SET_ACTIVITY', {pid: process.pid, activity: rpcActivity}).catch(console.error);
-                        }
-
-                        $('#sessiontitle').html(`Duels Overall Session Stats`);
-
-                        sessionHTML += `<span class="greengradient">Winstreak:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.current_winstreak, newplayer.stats.Duels.current_winstreak)}<br><br>`;
-                        sessionHTML += `<span class="greengradient">Kills:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.kills, newplayer.stats.Duels.kills)}<br>`;
-                        sessionHTML += `<span class="redgradient">Deaths:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.deaths, newplayer.stats.Duels.deaths, 1)}<br>`;
-                        sessionHTML += `<span class="yellowgradient">KDR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Duels.kills/startplayer.stats.Duels.deaths).toFixed(3), parseFloat(newplayer.stats.Duels.kills/newplayer.stats.Duels.deaths).toFixed(3))}<br><br>`;
-                        sessionHTML += `<span class="greengradient">Wins:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.wins, newplayer.stats.Duels.wins)}<br>`;
-                        sessionHTML += `<span class="redgradient">Losses:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.losses, newplayer.stats.Duels.losses, 1)}<br>`;
-                        sessionHTML += `<span class="yellowgradient">WLR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Duels.wins/startplayer.stats.Duels.losses).toFixed(3), parseFloat(newplayer.stats.Duels.wins/newplayer.stats.Duels.losses).toFixed(3))}<br><br>`;
-                    }
-                    $('#sessionhtml').html(sessionHTML);
-
-                    let secschange = parseFloat((new Date() - starttime)/1000).toFixed(), timeHTML = 'Stats changes in the past ';
-                    let minschange = parseFloat(secschange/60).toFixed(1);
-                    if (minschange >= 60) timeHTML += `${parseFloat(minschange/60).toFixed()} hrs, `;
-                    timeHTML += `${parseFloat(minschange%60).toFixed(1)} mins`;
-                    $('#sessiontime').html(timeHTML);
+        $('#sessionavatar').attr('src', `https://crafatar.com/avatars/${useruuid}?size=100&default=MHF_Steve&overlay`);
+        $('#sessionign').html(nameColor(newplayer));
+        let sessionHTML = '';
+        if (gamemode === 0) {
+            if (e === 1) {
+                rpcActivity.details = 'Bedwars';
+                rpcActivity.assets.small_image = 'bedwars'; rpcActivity.assets.small_text = 'Playing Bedwars'; rpcActivity.state = "Just chillin'";
+                if (config.get('settings.rpc_stats', 1) === 1) {
+                    let tfinals = newplayer.stats.Bedwars.final_kills_bedwars-startplayer.stats.Bedwars.final_kills_bedwars, tbeds = newplayer.stats.Bedwars.beds_broken_bedwars-startplayer.stats.Bedwars.beds_broken_bedwars, twins = newplayer.stats.Bedwars.wins_bedwars-startplayer.stats.Bedwars.wins_bedwars;
+                    if (tfinals+tbeds+twins !== 0) rpcActivity.state = `Finals: ${tfinals} | Beds: ${tbeds} | Wins: ${twins}`;
+                    rpcActivity.details += ` [${newplayer.achievements.bedwars_level}✫]`;
                 }
-            }catch (e) {console.log(e); $('#sessionhtml').html(sessionHTML); rpc.request('SET_ACTIVITY', {pid: process.pid, activity: rpcActivity}).catch(console.error);}
+                else if (config.get('settings.rpc_stats', 1) === 2) {
+                    rpcActivity.state = `FKDR: ${parseFloat(newplayer.stats.Bedwars[`${gmode}final_kills_bedwars`]/newplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(2)} | WLR: ${parseFloat(newplayer.stats.Bedwars[`${gmode}wins_bedwars`]/newplayer.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(2)} | BBLR: ${parseFloat(newplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`]/newplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`]).toFixed(2)}`;
+                    rpcActivity.details += ` [${newplayer.achievements.bedwars_level}✫]`;
+                }
+                return rpc.request('SET_ACTIVITY', {pid: process.pid, activity: rpcActivity}).catch(console.error);
+            }
+
+            let bwmode = 'Overall';
+            if (gmode.includes('_one')) bwmode = 'Solos';
+            else if (gmode.includes('_two')) bwmode = 'Doubles';
+            else if (gmode.includes('_three')) bwmode = 'Threes';
+            else if (gmode.includes('_four')) bwmode = 'Fours';
+            $('#sessiontitle').html(`Bedwars ${bwmode} Session Stats`);
+
+            sessionHTML += `<span class="greengradient">Stars:</span> &nbsp;${sessionNumHTML(parseFloat(getBedWarsLevel(startplayer.stats.Bedwars.Experience)).toFixed(2), parseFloat(getBedWarsLevel(newplayer.stats.Bedwars.Experience)).toFixed(2), 'lvl')}<br><br>`;
+            sessionHTML += `<span class="greengradient">Winstreak:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}winstreak`], newplayer.stats.Bedwars[`${gmode}winstreak`])}<br><br>`;
+            sessionHTML += `<span class="greengradient">Final Kills:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}final_kills_bedwars`], newplayer.stats.Bedwars[`${gmode}final_kills_bedwars`])}<br>`;
+            sessionHTML += `<span class="redgradient">Final Deaths:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`], newplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`], 1)}<br>`;
+            sessionHTML += `<span class="yellowgradient">FKDR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Bedwars[`${gmode}final_kills_bedwars`]/startplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(3), parseFloat(newplayer.stats.Bedwars[`${gmode}final_kills_bedwars`]/newplayer.stats.Bedwars[`${gmode}final_deaths_bedwars`]).toFixed(3))}<br><br>`;
+            sessionHTML += `<span class="greengradient">Wins:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}wins_bedwars`], newplayer.stats.Bedwars[`${gmode}wins_bedwars`])}<br>`;
+            sessionHTML += `<span class="redgradient">Losses:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}losses_bedwars`], newplayer.stats.Bedwars[`${gmode}losses_bedwars`], 1)}<br>`;
+            sessionHTML += `<span class="yellowgradient">WLR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Bedwars[`${gmode}wins_bedwars`]/startplayer.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(3), parseFloat(newplayer.stats.Bedwars[`${gmode}wins_bedwars`]/newplayer.stats.Bedwars[`${gmode}losses_bedwars`]).toFixed(3))}<br><br>`;
+            sessionHTML += `<span class="greengradient">Beds Broken:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`], newplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`])}<br>`;
+            sessionHTML += `<span class="redgradient">Beds Lost:</span> &nbsp;${sessionNumHTML(startplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`], newplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`], 1)}<br>`;
+            sessionHTML += `<span class="yellowgradient">BBLR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`]/startplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`]).toFixed(3), parseFloat(newplayer.stats.Bedwars[`${gmode}beds_broken_bedwars`]/newplayer.stats.Bedwars[`${gmode}beds_lost_bedwars`]).toFixed(3))}<br><br>`;
+        }
+        else if (gamemode === 1) {
+            if (e === 1) {
+                rpcActivity.details = 'Skywars';
+                rpcActivity.assets.small_image = 'skywars'; rpcActivity.assets.small_text = 'Playing Skywars'; rpcActivity.state = "Just chillin'";
+                if (config.get('settings.rpc_stats', 1) === 1){
+                    let tkills = newplayer.stats.SkyWars.kills-startplayer.stats.SkyWars.kills, twins = newplayer.stats.SkyWars.wins-startplayer.stats.SkyWars.wins;
+                    if (tkills+twins !== 0) rpcActivity.state = `Kills: ${tkills} | Wins: ${twins}`;
+                    rpcActivity.details += ` [${swLVL(newplayer.stats.SkyWars.skywars_experience)}✬]`;
+                }
+                else if (config.get('settings.rpc_stats', 1) === 2){
+                    rpcActivity.state = `KDR: ${parseFloat(newplayer.stats.SkyWars.kills/newplayer.stats.SkyWars.deaths).toFixed(2)} | WLR: ${parseFloat(newplayer.stats.SkyWars.wins/newplayer.stats.SkyWars.losses).toFixed(2)} | Kills: ${newplayer.stats.SkyWars.kills}`;
+                    rpcActivity.details += ` [${swLVL(newplayer.stats.SkyWars.skywars_experience)}✬]`;
+                }
+                return rpc.request('SET_ACTIVITY', {pid: process.pid, activity: rpcActivity}).catch(console.error);
+            }
+
+            $('#sessiontitle').html(`Skywars Session Stats`);
+
+            sessionHTML += `<span class="greengradient">Level:</span> &nbsp;${sessionNumHTML(swLVL(startplayer.stats.SkyWars.skywars_experience), swLVL(newplayer.stats.SkyWars.skywars_experience), 'lvl')}<br><br>`;
+            sessionHTML += `<span class="greengradient">Kills:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.kills, newplayer.stats.SkyWars.kills)}<br>`;
+            sessionHTML += `<span class="redgradient">Deaths:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.deaths, newplayer.stats.SkyWars.deaths, 1)}<br>`;
+            sessionHTML += `<span class="yellowgradient">KDR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.SkyWars.kills/startplayer.stats.SkyWars.deaths).toFixed(3), parseFloat(newplayer.stats.SkyWars.kills/newplayer.stats.SkyWars.deaths).toFixed(3))}<br><br>`;
+            sessionHTML += `<span class="greengradient">Wins:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.wins, newplayer.stats.SkyWars.wins)}<br>`;
+            sessionHTML += `<span class="redgradient">Losses:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.losses, newplayer.stats.SkyWars.losses, 1)}<br>`;
+            sessionHTML += `<span class="yellowgradient">WLR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.SkyWars.wins/startplayer.stats.SkyWars.losses).toFixed(3), parseFloat(newplayer.stats.SkyWars.wins/newplayer.stats.SkyWars.losses).toFixed(3))}<br><br>`;
+            sessionHTML += `<span class="greengradient">Heads:</span> &nbsp;${sessionNumHTML(startplayer.stats.SkyWars.heads, newplayer.stats.SkyWars.heads)}<br>`;
+        }
+        else if (gamemode === 2) {
+            if (e === 1) {
+                rpcActivity.details = `Duels`;
+                rpcActivity.assets.small_image = 'duels'; rpcActivity.assets.small_text = 'Playing Duels'; rpcActivity.state = "Just chillin'";
+                if (config.get('settings.rpc_stats', 1) === 1){
+                    let twins = newplayer.stats.Duels.wins-startplayer.stats.Duels.wins, tws = startplayer.stats.Duels.current_winstreak;
+                    if (twins+tws !== 0) rpcActivity.state = `Wins: ${twins} | Winstreak: ${tws}`;
+                }
+                else if (config.get('settings.rpc_stats', 1) === 2){
+                    rpcActivity.state = `Wins: ${newplayer.stats.Duels.wins} | Best Winstreak: ${newplayer.stats.Duels.best_overall_winstreak}`;
+                }
+                return rpc.request('SET_ACTIVITY', {pid: process.pid, activity: rpcActivity}).catch(console.error);
+            }
+
+            $('#sessiontitle').html(`Duels Overall Session Stats`);
+
+            sessionHTML += `<span class="greengradient">Winstreak:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.current_winstreak, newplayer.stats.Duels.current_winstreak)}<br><br>`;
+            sessionHTML += `<span class="greengradient">Kills:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.kills, newplayer.stats.Duels.kills)}<br>`;
+            sessionHTML += `<span class="redgradient">Deaths:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.deaths, newplayer.stats.Duels.deaths, 1)}<br>`;
+            sessionHTML += `<span class="yellowgradient">KDR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Duels.kills/startplayer.stats.Duels.deaths).toFixed(3), parseFloat(newplayer.stats.Duels.kills/newplayer.stats.Duels.deaths).toFixed(3))}<br><br>`;
+            sessionHTML += `<span class="greengradient">Wins:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.wins, newplayer.stats.Duels.wins)}<br>`;
+            sessionHTML += `<span class="redgradient">Losses:</span> &nbsp;${sessionNumHTML(startplayer.stats.Duels.losses, newplayer.stats.Duels.losses, 1)}<br>`;
+            sessionHTML += `<span class="yellowgradient">WLR:</span> &nbsp;${sessionNumHTML(parseFloat(startplayer.stats.Duels.wins/startplayer.stats.Duels.losses).toFixed(3), parseFloat(newplayer.stats.Duels.wins/newplayer.stats.Duels.losses).toFixed(3))}<br><br>`;
+        }
+        $('#sessionhtml').html(sessionHTML);
+
+        let secschange = parseFloat((new Date() - starttime)/1000).toFixed(), timeHTML = 'Stats changes in the past ';
+        let minschange = parseFloat(secschange/60).toFixed(1);
+        if (minschange >= 60) timeHTML += `${parseFloat(minschange/60).toFixed()} hrs, `;
+        timeHTML += `${parseFloat(minschange%60).toFixed(1)} mins`;
+        $('#sessiontime').html(timeHTML);
+    }
+
+    function updateSession(startapi, e = 0){
+        let newplayer = CACHE.get(user);
+        if (newplayer !== false) {
+            return updateSessionHTML(startapi, newplayer, e);
+        }
+
+        let call = '', header = null;
+        if (!overlayAPIdown) call = `${backendIP}/player?uuid=${useruuid}`;
+        else if (goodkey && !hypixelAPIdown) {
+            call = `${HY_API}/player?uuid=${useruuid}`;
+            header = HY_HEADER;
+        }
+        else return false;
+
+        $.ajax({type: 'GET', url: call, headers: header, success: (data) => {
+            try {
+                if (data.success === true && data.player !== null){
+                    CACHE.set(user, data.player);
+                    updateSessionHTML(startapi, data.player, e);
+                }
+            } catch (e) {console.log(e); $('#sessionhtml').html(''); rpc.request('SET_ACTIVITY', {pid: process.pid, activity: rpcActivity}).catch(console.error);}
         }});
     }
 
@@ -1589,13 +1703,13 @@ $(() => {
     $('#startmusic').on('click', () => {
         if (music.session === true) return;
         $.ajax({type: 'GET', async: true, dataType: 'json', url: `${musicIP}/requestMusicSession?uuid=${useruuid}`, success: (data) => {
-            if (data.success === true){
+            if (data.success === true) {
                 $('.musicintro').css('display', 'none'); $('.musicplaying').css('display', 'block'); $('.musicbutton').css('display', 'inline-block');
                 ModalWindow.open({ title: 'Music Session Created', content: 'Check your ping in the Abyss Overlay Discord server to continue <3', type: 1 });
                 music.session = true;
                 music.updatetimer = setInterval(updateMusic, 5000);
             }
-            else{
+            else {
                 if (data.error.includes('Discord ID')){$('#unlinked').css('display', 'block'); $('#startmusic').css('display', 'none'); dialog.showMessageBox(currentWindow, {title: 'ERROR!', detail: 'This Minecraft account is not linked using the overlay\'s bot in the Abyss Overlay Discord server. Use the ".link [IGN]" command to link it first!', type: 'error'});}
                 else if (data.error.includes('No bots')){$('#nomusicbots').css('display', 'block'); $('#startmusic').css('display', 'none'); dialog.showMessageBox(currentWindow, {title: 'ERROR!', detail: 'All music bots in the overlay server are currently being used! Keep checking to see when one frees up', type: 'error'});}
                 else{con.log('UNKNOWN API ERROR with requestMusicSession'); $('#startmusic').css('display', 'none'); dialog.showMessageBox(currentWindow, {title: 'ERROR!', detail: 'API error. Contact the devs in the Abyss Overlay Discord server please!', type: 'error'});}

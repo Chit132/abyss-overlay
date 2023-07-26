@@ -5,6 +5,8 @@ const electron_log = require('electron-log'); electron_log.catchErrors({ showDia
 const isDev = require('electron-is-dev');
 const path = require('path');
 const { exec } = require('child_process');
+const { version } = require('./package.json');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 isDev && require('electron-reloader')(module)?.catch(() => {});
 
 if (process.platform === 'win32') app.setAppUserModelId('AbyssOverlay');
@@ -38,6 +40,7 @@ function createWindow(){
     win.setAlwaysOnTop(true);
     win.setVisibleOnAllWorkspaces(true);
     win.setMenu(null);
+    win.webContents.setUserAgent(`${process.env.AGENT_NAME}/${version}`);
 }
 
 let keybinds = {}

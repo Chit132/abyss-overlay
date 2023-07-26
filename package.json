@@ -1,7 +1,7 @@
 {
   "name": "abyss-overlay",
   "productName": "Abyss Overlay",
-  "version": "1.8.0",
+  "version": "2.0.0",
   "description": "The Official Abyss Stats Overlay",
   "homepage": "https://github.com/Chit132/abyss-overlay",
   "main": "main.js",
@@ -109,6 +109,7 @@
     "lowercase-keys": "^1.0.1",
     "lru-cache": "^6.0.0",
     "matcher": "^3.0.0",
+    "material-design-icons-iconfont": "^6.7.0",
     "mimic-response": "^1.0.1",
     "minimist": "1.2.6",
     "mkdirp": "^0.5.5",

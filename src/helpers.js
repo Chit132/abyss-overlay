@@ -1,56 +1,101 @@
 const config = require('electron-json-config');
 
 const HypixelColors = {
-    "RED": "#FF5555",
-    "GOLD": "#FFAA00",
-    "GREEN": "#55FF55",
-    "YELLOW": "#FFFF55",
-    "LIGHT_PURPLE": "#FF55FF",
-    "WHITE": "#FFFFFF",
-    "BLUE": "#5555FF",
-    "DARK_GREEN": "#00AA00",
-    "DARK_RED": "#AA0000",
-    "DARK_AQUA": "#00AAAA",
-    "DARK_PURPLE": "#AA00AA",
-    "DARK_GRAY": "#555555",
+    "AQUA": "#55FFFF",
     "BLACK": "#000000",
-    "DARK_BLUE": "#0000AA"
+    "BLUE": "#5555FF",
+    "DARK_AQUA": "#00AAAA",
+    "DARK_BLUE": "#0000AA",
+    "DARK_GRAY": "#555555",
+    "DARK_GREEN": "#00AA00",
+    "DARK_PURPLE": "#AA00AA",
+    "DARK_RED": "#AA0000",
+    "GOLD": "#FFAA00",
+    "GRAY": "#AAAAAA",
+    "GREEN": "#55FF55",
+    "LIGHT_PURPLE": "#FF55FF",
+    "RED": "#FF5555",
+    "WHITE": "#FFFFFF",
+    "YELLOW": "#FFFF55"
 };
 
+function formatStars(level, star, ...colors){
+    let span = (color, string) => `<span style="color: ${color}">${string}</span>`;
+    let template = ``;
+    let levelString = level.toString();
+
+    if (colors.length === levelString.length + 3) {
+        let digits = levelString.split('');
+        
+        template += span(colors[0], "[");
+        for (let i = 0; i < digits.length; i++) {
+            template += span(colors[i + 1], digits[i]);
+        }
+        template += span(colors[colors.length - 2], star);
+        template += span(colors[colors.length - 1], "]");
+    } else {
+        template += span(colors.length == 1 ? colors[0] : "#AAAAAA", `[${level}${star}]`);
+    }
+
+    return template;
+}
+
 function starColor(stars){
+    let { AQUA, BLACK, BLUE, DARK_AQUA, DARK_BLUE, DARK_GRAY, DARK_GREEN, DARK_PURPLE, DARK_RED, GOLD, GRAY, GREEN, LIGHT_PURPLE, RED, WHITE, YELLOW } = HypixelColors;
     let gamemode = config.get('settings.gamemode', 0);
+
     if (gamemode === 0){
-        if (stars < 100) return `<span style="color: #AAAAAA;">[${stars}✫]</span>`;
-        else if (stars < 200) return `<span style="color: #FFFFFF">[${stars}✫]</span>`;
-        else if (stars < 300) return `<span style="color: #FFAA00">[${stars}✫]</span>`;
-        else if (stars < 400) return `<span style="color: #55FFFF">[${stars}✫]</span>`;
-        else if (stars < 500) return `<span style="color: #00AA00">[${stars}✫]</span>`;
-        else if (stars < 600) return `<span style="color: #00AAAA">[${stars}✫]</span>`;
-        else if (stars < 700) return `<span style="color: #AA0000">[${stars}✫]</span>`;
-        else if (stars < 800) return `<span style="color: #FF55FF">[${stars}✫]</span>`;
-        else if (stars < 900) return `<span style="color: #5555FF">[${stars}✫]</span>`;
-        else if (stars < 1000) return `<span style="color: #AA00AA">[${stars}✫]</span>`;
-        else if (stars < 1100) return `<span style="color: #FF5555">[<span style="color: #FFAA00">1</span><span style="color: #FFFF55">${Math.floor((stars%1000)/100)}</span><span style="color: #55FF55">${Math.floor((stars%100)/10)}</span><span style="color: #55FFFF">${stars%10}</span><span style="color: #FF55FF">✫</span><span style="color: #AA00AA">]</span>`;
-        else if (stars < 1200) return `<span style="color: #AAAAAA">[</span><span style="color: #FFFFFF">1${stars%1000}</span><span style="color: #AAAAAA">✪</span><span style="color: #AAAAAA">]</span>`;
-        else if (stars < 1300) return `<span style="color: #AAAAAA">[</span><span style="color: #FFFF55">1${stars%1000}</span><span style="color: #FFAA00">✪</span><span style="color: #AAAAAA">]</span>`;
-        else if (stars < 1400) return `<span style="color: #AAAAAA">[</span><span style="color: #55FFFF">1${stars%1000}</span><span style="color: #00AAAA">✪</span><span style="color: #AAAAAA">]</span>`;
-        else if (stars < 1500) return `<span style="color: #AAAAAA">[</span><span style="color: #55FF55">1${stars%1000}</span><span style="color: #00AA00">✪</span><span style="color: #AAAAAA">]</span>`;
-        else if (stars < 1600) return `<span style="color: #AAAAAA">[</span><span style="color: #00AAAA">1${stars%1000}</span><span style="color: #5555FF">✪</span><span style="color: #AAAAAA">]</span>`;
-        else if (stars < 1700) return `<span style="color: #AAAAAA">[</span><span style="color: #FF5555">1${stars%1000}</span><span style="color: #AA0000">✪</span><span style="color: #AAAAAA">]</span>`;
-        else if (stars < 1800) return `<span style="color: #AAAAAA">[</span><span style="color: #FF55FF">1${stars%1000}</span><span style="color: #AA00AA">✪</span><span style="color: #AAAAAA">]</span>`;
-        else if (stars < 1900) return `<span style="color: #AAAAAA">[</span><span style="color: #5555FF">1${stars%1000}</span><span style="color: #0000AA">✪</span><span style="color: #AAAAAA">]</span>`;
-        else if (stars < 2000) return `<span style="color: #AAAAAA">[</span><span style="color: #AA00AA">1${stars%1000}</span><span style="color: #555555">✪</span><span style="color: #AAAAAA">]</span>`;
-        else if (stars < 2100) return `<span style="color: #555555">[</span><span style="color: #AAAAAA">2</span><span style="color: #FFFFFF">0${Math.floor((stars%100)/10)}</span><span style="color: #AAAAAA">${stars%10}✪</span><span style="color: #555555">]</span>`
-        else if (stars < 2200) return `<span style="color: #FFFFFF">[2</span><span style="color: #FFFF55">1${Math.floor((stars-2100)/10)}</span><span style="color: #FFAA00">${stars%10}⚝]</span>`;
-        else if (stars < 2300) return `<span style="color: #FFAA00">[2</span><span style="color: #FFFFFF">2${Math.floor((stars-2200)/10)}</span><span style="color: #55FFFF">${stars%10}</span><span style="color: #00AAAA">⚝]</span>`;
-        else if (stars < 2400) return `<span style="color: #AA00AA">[2</span><span style="color: #FF55FF">3${Math.floor((stars-2300)/10)}</span><span style="color: #FFAA00">${stars%10}</span><span style="color: #FFFF55">⚝]</span>`;
-        else if (stars < 2500) return `<span style="color: #55FFFF">[2</span><span style="color: #FFFFFF">4${Math.floor((stars-2400)/10)}</span><span style="color: #AAAAAA">${stars%10}⚝</span><span style="color: #555555">]</span>`;
-        else if (stars < 2600) return `<span style="color: #FFFFFF">[2</span><span style="color: #55FF55">5${Math.floor((stars-2500)/10)}</span><span style="color: #00AA00">${stars%10}⚝]</span>`;
-        else if (stars < 2700) return `<span style="color: #AA0000">[2</span><span style="color: #FF5555">6${Math.floor((stars-2600)/10)}</span><span style="color: #FF55FF">${stars%10}⚝</span><span style="color: #AA00AA">]</span>`;
-        else if (stars < 2800) return `<span style="color: #FFFF55">[2</span><span style="color: #FFFFFF">7${Math.floor((stars-2700)/10)}</span><span style="color: #555555">${stars%10}⚝]</span>`;
-        else if (stars < 2900) return `<span style="color: #55FF55">[2</span><span style="color: #00AA00">8${Math.floor((stars-2800)/10)}</span><span style="color: #FFAA00">${stars%10}⚝</span><span style="color: #FF5555">]</span>`;
-        else if (stars < 3000) return `<span style="color: #55FFFF">[2</span><span style="color: #00AAAA">9${Math.floor((stars-2900)/10)}</span><span style="color: #5555FF">${stars%10}⚝</span><span style="color: #0000AA">]</span>`;
-        else return `<span style="color: #FFFF55">[3</span><span style="color: #FFAA00">${Math.floor((stars-3000)/10)}</span><span style="color: #FF5555">${stars%10}⚝</span><span style="color: #AA0000">]</span>`;
+        if (stars < 100) return formatStars(stars, '✫', GRAY);
+        else if (stars < 200) return formatStars(stars, '✫', WHITE);
+        else if (stars < 300) return formatStars(stars, '✫', GOLD);
+        else if (stars < 400) return formatStars(stars, '✫', AQUA);
+        else if (stars < 500) return formatStars(stars, '✫', DARK_GREEN);
+        else if (stars < 600) return formatStars(stars, '✫', DARK_AQUA);
+        else if (stars < 700) return formatStars(stars, '✫', DARK_RED);
+        else if (stars < 800) return formatStars(stars, '✫', LIGHT_PURPLE);
+        else if (stars < 900) return formatStars(stars, '✫', BLUE);
+        else if (stars < 1000) return formatStars(stars, '✫', DARK_PURPLE);
+        else if (stars < 1100) return formatStars(stars, '✫', RED, GOLD, YELLOW, GREEN, AQUA, LIGHT_PURPLE, DARK_PURPLE);
+        else if (stars < 1200) return formatStars(stars, '✪', GRAY, WHITE, WHITE, WHITE, WHITE, GRAY, GRAY);
+        else if (stars < 1300) return formatStars(stars, '✪', GRAY, YELLOW, YELLOW, YELLOW, YELLOW, GOLD, GRAY);
+        else if (stars < 1400) return formatStars(stars, '✪', GRAY, AQUA, AQUA, AQUA, AQUA, DARK_AQUA, GRAY);
+        else if (stars < 1500) return formatStars(stars, '✪', GRAY, GREEN, GREEN, GREEN, GREEN, DARK_GREEN, GRAY);
+        else if (stars < 1600) return formatStars(stars, '✪', GRAY, DARK_AQUA, DARK_AQUA, DARK_AQUA, DARK_AQUA, BLUE, GRAY);
+        else if (stars < 1700) return formatStars(stars, '✪', GRAY, RED, RED, RED, RED, DARK_RED, GRAY);
+        else if (stars < 1800) return formatStars(stars, '✪', GRAY, LIGHT_PURPLE, LIGHT_PURPLE, LIGHT_PURPLE, LIGHT_PURPLE, DARK_PURPLE, GRAY);
+        else if (stars < 1900) return formatStars(stars, '✪', GRAY, BLUE, BLUE, BLUE, BLUE, DARK_BLUE, GRAY);
+        else if (stars < 2000) return formatStars(stars, '✪', GRAY, DARK_PURPLE, DARK_PURPLE, DARK_PURPLE, DARK_PURPLE, DARK_GRAY, GRAY);
+        else if (stars < 2100) return formatStars(stars, '✪', DARK_GRAY, GRAY, WHITE, WHITE, GRAY, GRAY, DARK_GRAY);
+        else if (stars < 2200) return formatStars(stars, '⚝', WHITE, WHITE, YELLOW, YELLOW, GOLD, GOLD, GOLD);
+        else if (stars < 2300) return formatStars(stars, '⚝', GOLD, GOLD, WHITE, WHITE, AQUA, DARK_AQUA, DARK_AQUA);
+        else if (stars < 2400) return formatStars(stars, '⚝', DARK_PURPLE, DARK_PURPLE, LIGHT_PURPLE, LIGHT_PURPLE, GOLD, YELLOW, YELLOW);
+        else if (stars < 2500) return formatStars(stars, '⚝', AQUA, AQUA, WHITE, WHITE, GRAY, GRAY, DARK_GRAY);
+        else if (stars < 2600) return formatStars(stars, '⚝', WHITE, WHITE, GREEN, GREEN, DARK_GRAY, DARK_GRAY, DARK_GRAY);
+        else if (stars < 2700) return formatStars(stars, '⚝', DARK_RED, DARK_RED, RED, RED, LIGHT_PURPLE, LIGHT_PURPLE, DARK_PURPLE);
+        else if (stars < 2800) return formatStars(stars, '⚝', YELLOW, YELLOW, WHITE, WHITE, DARK_GRAY, DARK_GRAY, DARK_GRAY);
+        else if (stars < 2900) return formatStars(stars, '⚝', GREEN, GREEN, DARK_GREEN, DARK_GREEN, GOLD, GOLD, YELLOW);
+        else if (stars < 3000) return formatStars(stars, '⚝', AQUA, AQUA, DARK_AQUA, DARK_AQUA, BLUE, BLUE, DARK_BLUE);
+        else if (stars < 3100) return formatStars(stars, '⚝', YELLOW, YELLOW, GOLD, GOLD, RED, RED, DARK_RED);
+        else if (stars < 3200) return formatStars(stars, '✥', BLUE, BLUE, AQUA, AQUA, GOLD, GOLD, YELLOW);
+        else if (stars < 3300) return formatStars(stars, '✥', RED, DARK_RED, GRAY, GRAY, DARK_RED, RED, RED);
+        else if (stars < 3400) return formatStars(stars, '✥', BLUE, BLUE, BLUE, LIGHT_PURPLE, RED, RED, DARK_RED);
+        else if (stars < 3500) return formatStars(stars, '✥', DARK_GREEN, GREEN, LIGHT_PURPLE, LIGHT_PURPLE, DARK_PURPLE, DARK_PURPLE, DARK_GREEN);
+        else if (stars < 3600) return formatStars(stars, '✥', RED, RED, DARK_RED, DARK_RED, DARK_GREEN, GREEN, GREEN);
+        else if (stars < 3700) return formatStars(stars, '✥', GREEN, GREEN, GREEN, AQUA, BLUE, BLUE, DARK_BLUE);
+        else if (stars < 3800) return formatStars(stars, '✥', DARK_RED, DARK_RED, RED, RED, AQUA, DARK_AQUA, DARK_AQUA);
+        else if (stars < 3900) return formatStars(stars, '✥', DARK_BLUE, DARK_BLUE, BLUE, DARK_PURPLE, DARK_PURPLE, LIGHT_PURPLE, DARK_BLUE);
+        else if (stars < 4000) return formatStars(stars, '✥', RED, RED, GREEN, GREEN, AQUA, BLUE, BLUE);
+        else if (stars < 4100) return formatStars(stars, '✥', DARK_PURPLE, DARK_PURPLE, RED, RED, GOLD, GOLD, YELLOW);
+        else if (stars < 4200) return formatStars(stars, '✥', YELLOW, YELLOW, GOLD, RED, LIGHT_PURPLE, LIGHT_PURPLE, DARK_PURPLE);
+        else if (stars < 4300) return formatStars(stars, '✥', DARK_BLUE, BLUE, DARK_AQUA, AQUA, WHITE, GRAY, GRAY);
+        else if (stars < 4400) return formatStars(stars, '✥', BLACK, DARK_PURPLE, DARK_GRAY, DARK_GRAY, DARK_PURPLE, DARK_PURPLE, BLACK);
+        else if (stars < 4500) return formatStars(stars, '✥', DARK_GREEN, DARK_GREEN, GREEN, YELLOW, GOLD, DARK_PURPLE, LIGHT_PURPLE);
+        else if (stars < 4600) return formatStars(stars, '✥', WHITE, WHITE, AQUA, AQUA, DARK_AQUA, DARK_AQUA, DARK_AQUA);
+        else if (stars < 4700) return formatStars(stars, '✥', DARK_AQUA, AQUA, YELLOW, YELLOW, GOLD, LIGHT_PURPLE, DARK_PURPLE);
+        else if (stars < 4800) return formatStars(stars, '✥', WHITE, DARK_RED, RED, RED, BLUE, DARK_BLUE, BLUE);
+        else if (stars < 4900) return formatStars(stars, '✥', DARK_PURPLE, DARK_PURPLE, RED, GOLD, YELLOW, AQUA, DARK_AQUA);
+        else if (stars < 5000) return formatStars(stars, '✥', DARK_GREEN, GREEN, WHITE, WHITE, GREEN, GREEN, DARK_GREEN);
+        else return formatStars(stars, '✥', DARK_RED, DARK_RED, DARK_PURPLE, BLUE, BLUE, DARK_BLUE, BLACK);
     }
     else if (gamemode === 1){
         if (stars < 5) return `<span style="color: #AAAAAA;">[${stars}⚔]</span>`;
@@ -309,7 +354,7 @@ function winsColor(wins){
 
 function getTag(api, tagslist = []){
     let temp = false;
-    try{temp = tagslist.find(o => o.uuid === api.id).tag}
+    try{temp = tagslist.find(o => o.uuid === api.uuid).tag}
     catch{temp = false;}
     try{
         if (api.inParty) return '<li style="color: #03C800">P</li>';
@@ -317,10 +362,6 @@ function getTag(api, tagslist = []){
         else if (api.partyReq) return '<li style="color: #37B836">PREQ</li>';
         else if (api.friendReq) return '<li style="color: #D6D600">FREQ</li>';
         else if (api.guildList) return '<li style="color: #36C700">GLD</li>';
-        else if (api.id === 'df954981d7204b4d84e19d294f703868') return '<li style="color: #AA00AA">DEV</li>';
-        else if (api.id === '6440f5d5cc30428c812deb892c5cd411') return '<li style="color: #FFB69D">QT♡</li>';
-        else if (api.id === '2b034ebee1514b75a8a67c50d8c7fd29') return '<li style="color: #E998B7">✨</li>';
-        else if (api.id === 'c2291b87d894461daca36be83fc51310' || api.id === '48ed8ffb95ec4647b7c1c5990d40a6f2' || api.id === '9b5aeb7e3d9b43b2b026b2e444da24ff' || api.id === '01f32cf78b1a4d2f8b15b477c65f7fb7' || api.id === '01c59560e6014b9aa84c24877c485f63' || api.id === 'a3cef65ded744b739f8e46db5d87d6a3' || api.id === '2f457183cca44a3ea923a03af37de287') return '<li style="color: #E998B7">QT</li>';
         else if (api.achievements.bedwars_level < 150 && api.stats.Bedwars.final_deaths_bedwars/api.stats.Bedwars.losses_bedwars < 0.75 && api.stats.Bedwars.final_kills_bedwars/api.stats.Bedwars.final_deaths_bedwars < 1.5) return '<li style="color: #FF5555">SNPR</li>';
         else if (temp) return temp.replaceAll('[', '<').replaceAll(']', '>').replaceAll("'", '"');
         else if ((api.achievements.bedwars_level < 15 && api.stats.Bedwars.final_kills_bedwars/api.stats.Bedwars.final_deaths_bedwars > 5) || (api.achievements.bedwars_level > 15 && api.achievements.bedwars_level < 100 && api.achievements.bedwars_level/(api.stats.Bedwars.final_kills_bedwars/api.stats.Bedwars.final_deaths_bedwars) <= 5)) return '<li style="color: #5555FF">ALT</li>';
