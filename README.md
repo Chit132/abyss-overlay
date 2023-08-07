@@ -41,6 +41,8 @@
 - Color-coded stats in terms of skill level
 - Shows player skins next to their names
 - Hover over player names to see detailed stats
+- Auto detects logs
+- No need for user API key nor authentication
 ### Commands
 - Tells you when you need to run the command `/who`
 - You can use the command `/w ![username]` in game to check a person's stats
@@ -79,7 +81,7 @@
 - Completely FREE!
 
 ## Preview
-![Preview](https://cdn.discordapp.com/attachments/822847106377056287/843191678991204362/unknown.png)
+![Preview](https://cdn.discordapp.com/attachments/823321640594309201/1138124786304811059/image.png)
 ![Music](https://camo.githubusercontent.com/fdcd192cc5afcbe84fa8d7875c56b79c6d684c72a7a97632d03e637ea3fabe2e/68747470733a2f2f63646e2e646973636f72646170702e636f6d2f6174746163686d656e74732f3832343035303636343931323731353831362f3931333230303434383439343737323235342f756e6b6e6f776e2e706e67)
 
 ## Known Bugs
