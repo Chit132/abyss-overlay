@@ -10,7 +10,7 @@
     "build-installer": "electron-builder --win --x64 --ia32",
     "build-installer-dev": "electron-builder --win --x64",
     "build-mac": "electron-builder --mac",
-    "linux": "electron-packager . Abyss-Overlay --platform=linux",
+    "linux": "cross-env USE_SYSTEM_MKSQUASHFS=true USE_SYSTEM_7ZA=true NODE_OPTIONS=--openssl-legacy-provider electron-builder --linux",
     "publish": "electron-builder --win --x64 --ia32 --publish always"
   },
   "build": {
@@ -54,6 +54,7 @@
   "email": "",
   "repository": "github:Chit132/abyss-overlay",
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "electron": "^12.0.0",
     "electron-builder": "^22.10.5",
     "electron-packager": "^15.2.0",
