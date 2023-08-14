@@ -431,7 +431,7 @@ function appendPlayer(ign, api, options, guild = '') {
 
 function playerAJAX(uuid, ign, options, guild = '') {
     let api = '';
-    $.ajax({type: 'GET', async: true, url: `${HY_API}/player?uuid=${uuid}`, headers: HY_HEADER, success: (data) => {
+    $.ajax({type: 'GET', async: true, url: `${HY_API}/player?name=${ign}`, headers: HY_HEADER, success: (data) => {
         HyThrottle = false; hypixelAPIdown = false; ModalWindow.HyThrottle = false; ModalWindow.APIdown = false;
         if (data.success === true && data.player !== null) {
             if (data.player.displayname === ign) {
@@ -462,18 +462,19 @@ function fetchPlayer_hypixel(uuid, ign, options) {
         return updateArray();
     }
     if (guildtag) {
-        $.ajax({type: 'GET', async: true, url: `${HY_API}/guild?player=${uuid}`, headers: HY_HEADER, success: (data) => {
-            if (data.success === true && data.guild) {
-                let guild = '';
-                if (data.guild && data.guild.tag) {
-                    guild = ` <span style="color: ${HypixelColors[data.guild.tagColor || 'DARK_GRAY']}">[${data.guild.tag}]</span>`;
-                }
-                playerAJAX(uuid, ign, options, guild);
-            }
-            else playerAJAX(uuid, ign, options);
-        }, error: () => {
-            playerAJAX(uuid, ign, options);
-        }});
+        // $.ajax({type: 'GET', async: true, url: `${HY_API}/guild?player=${uuid}`, headers: HY_HEADER, success: (data) => {
+        //     if (data.success === true && data.guild) {
+        //         let guild = '';
+        //         if (data.guild && data.guild.tag) {
+        //             guild = ` <span style="color: ${HypixelColors[data.guild.tagColor || 'DARK_GRAY']}">[${data.guild.tag}]</span>`;
+        //         }
+        //         playerAJAX(uuid, ign, options, guild);
+        //     }
+        //     else playerAJAX(uuid, ign, options);
+        // }, error: () => {
+        //     playerAJAX(uuid, ign, options);
+        // }});
+        playerAJAX(uuid, ign, options);
     }
     else {
         playerAJAX(uuid, ign, options);
@@ -527,26 +528,68 @@ function fetchPlayer_backend(uuid, ign, options) {
 
 function fetchPlayer(ign, options = {}) {
     console.log(`Fetching player: ${ign}`);
-    $.ajax({type: 'GET', async: true, url: mojang + ign, success: (data, status) => {
-        if (status === 'success') {
-            if (!overlayBackendDown) {
-                if (backendThrottle) {
-                    if (config.get('settings.useFallbackKey', true)) fetchPlayer_hypixel(data.id, data.name, options);
+    $.ajax({type: 'GET', async: true, url: `${backendIP}/player?name=${ign}`, success: (data) => {
+        backendThrottle = false; overlayBackendDown = false; ModalWindow.backendThrottle = false; ModalWindow.APIdown = false;
+        if (data.success === true && data.player !== null) {
+            if (data.player.displayname === ign) {
+                // con.log('got from backend: ' + ign)
+                api = data.player;
+                //api.uuid = uuid;
+                let guild = '';
+                if (data.guild && data.guild.tag) {
+                    guild = ` <span style="color: ${HypixelColors[data.guild.tagColor || 'DARK_GRAY']}">[${data.guild.tag}]</span>`;
                 }
-                else fetchPlayer_backend(data.id, data.name, options);
-            } else {
-                fetchPlayer_hypixel(data.id, data.name, options);
+                api.guild = guild;
+                CACHE.set(ign, api);
+                appendPlayer(ign, api, options, guild);
             }
-        } else {
-            players.push({name: ign, namehtml: ign, api: null});
-            updateArray();
+            else {
+                players.push({name: ign, namehtml: ign, api: null});
+                updateArray();
+            }
         }
-    }, error: () => {
-        CACHE.set(ign, null);
-        players.push({name: ign, namehtml: ign, api: null});
+        else if (data.player == null){players.push({name: ign, namehtml: ign, api: null}); updateArray();}
+    }, error: (jqXHR) => {
+        if (jqXHR.status === 0) overlayBackendDown = true;
+        else if (jqXHR.status === 429) {
+            con.log('limited: ' + ign)
+            if (!backendThrottle) {
+                backendThrottle = true;
+                con.log('backend ratelimited for seconds: ' + jqXHR.getResponseHeader('x-ratelimit-reset'));
+                setTimeout(() => {
+                    backendThrottle = false;
+                    con.log('backend ratelimit lifted');
+                }, !jqXHR.getResponseHeader('x-ratelimit-reset') ? 60000 : parseInt(jqXHR.getResponseHeader('x-ratelimit-reset')) * 1000);
+            }
+            if (config.get('settings.useFallbackKey', true)) {
+                fetchPlayer_hypixel(null /*uuid*/, ign, options);
+                return;
+            }
+        }
+        else if (jqXHR.status === 500) hypixelAPIdown = true;
+        else {overlayBackendDown = true; players.push({name: ign, namehtml: ign, api: null})};
         updateArray();
-        console.error('error with mojang api GET uuid');
     }});
+    // $.ajax({type: 'GET', async: true, url: mojang + ign, success: (data, status) => {
+    //     if (status === 'success') {
+    //         if (!overlayBackendDown) {
+    //             if (backendThrottle) {
+    //                 if (config.get('settings.useFallbackKey', true)) fetchPlayer_hypixel(data.id, data.name, options);
+    //             }
+    //             else fetchPlayer_backend(data.id, data.name, options);
+    //         } else {
+    //             fetchPlayer_hypixel(data.id, data.name, options);
+    //         }
+    //     } else {
+    //         players.push({name: ign, namehtml: ign, api: null});
+    //         updateArray();
+    //     }
+    // }, error: () => {
+    //     CACHE.set(ign, null);
+    //     players.push({name: ign, namehtml: ign, api: null});
+    //     updateArray();
+    //     console.error('error with mojang api GET uuid');
+    // }});
 }
 
 function addPlayer(ign = undefined, options = { skipCache: false }) {
@@ -1670,7 +1713,7 @@ $(() => {
         $.ajax({type: 'GET', url: call, headers: header, success: (data) => {
             try {
                 if (data.success === true && data.player !== null){
-                    CACHE.set(user, data.player);
+                    //CACHE.set(user, data.player);
                     updateSessionHTML(startapi, data.player, e);
                 }
             } catch (e) {console.log(e); $('#sessionhtml').html(''); rpc.request('SET_ACTIVITY', {pid: process.pid, activity: rpcActivity}).catch(console.error);}
