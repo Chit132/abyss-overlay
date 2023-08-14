@@ -34,7 +34,7 @@ config.delete('players');
 const HY_API = 'https://api.hypixel.net', HY_HEADER = { 'API-Key': config.get('key', '1') };
 const tagsIP = process.env.TAGS_IP, musicIP = process.env.MUSIC_IP, backendIP = process.env.BACKEND_IP, mojang = 'https://api.mojang.com/users/profiles/minecraft/';
 const CACHE = new Cache();
-var players = [], numplayers = 0, goodkey = true, HyThrottle = false, hypixelAPIdown = false, overlayAPIdown = false, backendThrottle = false, overlayBackendDown = false, logpath = '', goodfile = true, currentWindow = '', user = '', useruuid = config.get('uuid', undefined), sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', false), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
+var players = [], numplayers = 0, goodkey = true, HyThrottle = false, hypixelAPIdown = false, overlayAPIdown = false, backendThrottle = false, overlayBackendDown = false, logpath = '', goodfile = true, currentWindow = '', user = '', useruuid = config.get('uuid', undefined), sent = false, usernick = undefined, winheight = 600, inlobby = true, zoom = 1, gamemode = config.get('settings.gamemode', 0), gmode = config.get('settings.bwgmode', ''), guildlist = false, tagslist = [], guildtag = config.get('settings.gtag', true), startapi = null, starttime = new Date(), music = {session: false, playing: false, looping: false, queue: [], updatetimer: 0, timeratio: [0, 0], songtimer: 0, locked: false, lockwarned: false};
 var rpcActivity = {details: 'Vibing', state: "Kickin' some butt", assets: {large_image: 'overlay_logo', large_text: 'Abyss Overlay', small_image: 'hypixel', small_text: 'Playing on Hypixel'}, buttons: [{label: 'Get Overlay', 'url': 'https://github.com/Chit132/abyss-overlay/releases/latest'}, {label: 'Join the Discord', 'url': 'https://discord.gg/7dexcJTyCJ'}], timestamps: {start: Date.now()}, instance: true};
 
 function updateTags(){
@@ -152,6 +152,7 @@ function pingBackend() {
         ModalWindow.open({ title: 'Connection successful!', type: 1,
             content: 'You may start queuing games!'
         });
+        data.bulletin && ModalWindow.open(data.bulletin);
     }, error: (jqXHR) => {
         if (jqXHR.status === 0) overlayBackendDown = true;
         else if (jqXHR.status === 403) {
@@ -914,7 +915,7 @@ function main(event){
                     else addPlayer(tmsgarray[i], { meta: 5 });
                 }
             }
-            else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', false)}, 10000);}
+            else if (guildlist && msg.indexOf('Total Members:') === 0){guildlist = false; setTimeout(() => {guildtag = config.get('settings.gtag', true)}, 10000);}
             else if (music.session === true && msg.indexOf('Party') !== -1 && msg.indexOf('>') !== -1 && msg.indexOf(':') !== -1){
                 // let tign = msg.substring(0, msg.indexOf(':')); tign = tign.substring(tign.lastIndexOf(' ')+1); tign = tign.replace(/[^\w]/g,''); if (tign.substring(tign.length-1) === 'f') tign = tign.substring(0, tign.length-1);
                 // con.log(tign);
@@ -1163,7 +1164,7 @@ $(() => {
 
     ipcRenderer.on('test', (event, ...arg) => {
         console.log('test');
-        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'crystelia', 'zryp', 'Kqrso', 'hypixel', 'Acceqted', 'FunnyNick', 'mawuboo', 'Rexisflying', 'Divinah', '86tops', 'ip_man', 'm_lly', 'WarOG'];
+        let igns = ['OhChit', 'Brains', 'Manhal_IQ_', 'Cryptizism', 'zryp', '_Creation', 'hypixel', 'Acceqted', 'FunnyNick', 'Dadzies', 'Rexisflying', 'Divinah', '86tops', 'ip_man', 'xDank', 'WarOG'];
         for (let i = 0, ln = igns.length; i < ln; i++) addPlayer(igns[i]);
 
         //ipcRenderer.send('autowho');
