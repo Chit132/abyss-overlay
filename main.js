@@ -7,7 +7,7 @@ const path = require('path');
 const { exec } = require('child_process');
 const { version } = require('./package.json');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
-isDev && require('electron-reloader')(module)?.catch(() => {});
+isDev && !app.isPackaged && require('electron-reloader')(module)?.catch(() => {});
 
 if (process.platform === 'win32') app.setAppUserModelId('AbyssOverlay');
 
