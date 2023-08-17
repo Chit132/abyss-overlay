@@ -3,6 +3,7 @@ window.$ = window.jQuery = require('jquery');
 const ModalWindow = {
     HyThrottle: false,
     backendThrottle: false,
+    mojangThrottle: false,
     APIdown: false,
     DBdown: false,
     invalidKey: false,
@@ -68,6 +69,10 @@ const ModalWindow = {
             if (this.backendThrottle) return;
             options.class = 'err-key-throttle';
             this.backendThrottle = true;
+        } else if (options.class === -6) {
+            if (this.mojangThrottle) return;
+            options.class = 'err-key-throttle';
+            this.mojangThrottle = true;
         } else {
             options.class = '';
         }
