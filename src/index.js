@@ -155,7 +155,7 @@ function pingBackend() {
         });
         data.bulletin && ModalWindow.open(data.bulletin);
     }, error: (jqXHR) => {
-        if (jqXHR.status === 0) overlayBackendDown = true;
+        if (jqXHR.status === 0 || jqXHR.status === 500) overlayBackendDown = true;
         else if (jqXHR.status === 403) {
             overlayBackendDown = true;
             setTimeout(() => {
@@ -164,7 +164,7 @@ function pingBackend() {
                 });
             }, 1000);
         }
-        else if (jqXHR.status === 500) hypixelAPIdown = true;
+        else if (jqXHR.status === 569) hypixelAPIdown = true;
         updateArray();
     }, complete: () => {
         verifyUUID();
