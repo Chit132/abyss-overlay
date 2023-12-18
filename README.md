@@ -76,7 +76,7 @@
 - Enter IGN for additional overlay features
 ### Additional Features
 - All information is stored only on your computer; no one else has access to your API key, stats, or queuing patterns
-- Supports Windows and macOS
+- Supports Windows,macOS, and Linux(Appimage and snap)
 - Autoupdater for Windows
 - Completely FREE!
 
